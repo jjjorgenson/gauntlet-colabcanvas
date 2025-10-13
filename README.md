@@ -63,6 +63,8 @@ VITE_SUPABASE_URL=your_supabase_project_url_here
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 ```
 
+Replace with your actual Supabase credentials from your project dashboard.
+
 #### Enable Anonymous Sign-ins
 
 1. Go to your Supabase Dashboard

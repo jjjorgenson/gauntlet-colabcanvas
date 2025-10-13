@@ -124,8 +124,8 @@ collabcanvas/
 
 ### ✅ Task 1.5: Initial Deployment Setup
 - [x] Create README.md with setup instructions
-- [ ] Create GitHub repository (needs user action)
-- [ ] Push initial code (needs user action)
+- [x] Create GitHub repository (https://github.com/jjorgens/gauntlet-colabcanvas.git)
+- [x] Push initial code
 - [ ] Connect to Vercel (needs user action)
 - [ ] Deploy "Hello World" (needs user action)
 - [ ] Verify deployment works (needs user action)

@@ -53,22 +53,19 @@ export const Canvas = ({ user }) => {
   }, [deselectAll])
 
   const handleStageDrag = useCallback((e) => {
-    // Handle stage panning
-    const stage = e.target
-    const newPos = {
-      x: stage.x(),
-      y: stage.y()
-    }
-    // Update cursor position during drag
-    updateCursorPosition(newPos.x, newPos.y)
-  }, [updateCursorPosition])
+    // Handle stage panning - position is automatically updated by Konva
+  }, [])
 
   const handleWheel = useCallback((e) => {
     e.evt.preventDefault()
     
-    const stage = e.target
+    const stage = stageRef.current
+    if (!stage) return
+    
     const oldScale = stage.scaleX()
     const pointer = stage.getPointerPosition()
+    
+    if (!pointer) return
     
     const mousePointTo = {
       x: (pointer.x - stage.x()) / oldScale,
@@ -91,14 +88,16 @@ export const Canvas = ({ user }) => {
   }, [])
 
   const handleMouseMove = useCallback((e) => {
-    const stage = e.target.getStage()
-    if (stage) {
-      const pointer = stage.getPointerPosition()
-      if (pointer) {
-        updateCursorPosition(pointer.x, pointer.y)
-      }
-    }
-  }, [updateCursorPosition])
+    // TODO: Enable cursor tracking when multiplayer is implemented
+    // For now, disable to prevent errors
+    // const stage = e.target.getStage()
+    // if (stage) {
+    //   const pointer = stage.getPointerPosition()
+    //   if (pointer) {
+    //     updateCursorPosition(pointer.x, pointer.y)
+    //   }
+    // }
+  }, [])
 
   const handleAddRectangle = useCallback(() => {
     const stage = stageRef.current
