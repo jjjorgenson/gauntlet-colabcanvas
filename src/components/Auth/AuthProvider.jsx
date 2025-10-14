@@ -91,8 +91,20 @@ export const AuthProvider = ({ children }) => {
   }
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      // Clear local state first
+      setUser(null)
+      
+      // Try to sign out from Supabase
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
+      if (error) {
+        console.error('Logout error:', error)
+        // Error is logged but we've already cleared local state
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Error is logged but we've already cleared local state
+    }
   }
 
   // Get username from user metadata or email fallback
