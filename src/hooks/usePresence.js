@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { TABLES, REALTIME_CONFIG } from '../lib/constants'
 
@@ -7,28 +7,218 @@ export const usePresence = ({ userId, username }) => {
   const subscriptionRef = useRef(null)
   const presenceIntervalRef = useRef(null)
 
-  useEffect(() => {
-    // TODO: Enable when database tables are created
-    // For now, just simulate online users
-    setOnlineUsers([{
-      user_id: userId,
-      username: username,
-      is_online: true,
-      last_seen: new Date().toISOString()
-    }])
+  // Ensure profile exists before upserting presence
+  const ensureProfileExists = useCallback(async () => {
+    if (!userId || !username) return
 
-    return () => {
-      // Cleanup
+    try {
+      // Check if profile exists
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single()
+
+      if (checkError && checkError.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            username: username,
+            display_name: username
+          })
+
+        if (insertError) {
+          console.error('Error creating profile:', insertError)
+        }
+      } else if (checkError) {
+        console.error('Error checking profile:', checkError)
+      }
+    } catch (error) {
+      console.error('Error in ensureProfileExists:', error)
     }
   }, [userId, username])
+
+  // Upsert user presence
+  const upsertPresence = useCallback(async () => {
+    if (!userId) return
+
+    try {
+      // Ensure profile exists first
+      await ensureProfileExists()
+
+      const { error } = await supabase
+        .from(TABLES.USER_PRESENCE)
+        .upsert({
+          user_id: userId,
+          is_online: true,
+          last_seen: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+
+      if (error) {
+        console.error('Error upserting presence:', error)
+      }
+    } catch (error) {
+      console.error('Error in upsertPresence:', error)
+    }
+  }, [userId, ensureProfileExists])
+
+  // Generate a consistent color for a user ID
+  const getUserColor = useCallback((userId) => {
+    const colors = [
+      '#3B82F6', // Blue
+      '#EF4444', // Red
+      '#10B981', // Green
+      '#F59E0B', // Yellow
+      '#8B5CF6', // Purple
+      '#EC4899', // Pink
+      '#06B6D4', // Cyan
+      '#84CC16', // Lime
+      '#F97316', // Orange
+      '#6366F1', // Indigo
+    ]
+    
+    // Use the user ID to consistently assign a color
+    const hash = userId.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0)
+      return a & a
+    }, 0)
+    
+    return colors[Math.abs(hash) % colors.length]
+  }, [])
+
+  // Load all online users with profile information
+  const loadOnlineUsers = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from(TABLES.USER_PRESENCE)
+        .select(`
+          *,
+          profiles:user_id (
+            username,
+            display_name
+          )
+        `)
+        .eq('is_online', true)
+        .order('last_seen', { ascending: false })
+
+      if (error) {
+        console.error('Error loading online users:', error)
+        return
+      }
+
+      // Add colors and format the data
+      const usersWithColors = (data || []).map(user => ({
+        ...user,
+        username: user.profiles?.username || user.profiles?.display_name || 'Anonymous',
+        color: getUserColor(user.user_id)
+      }))
+
+      setOnlineUsers(usersWithColors)
+    } catch (error) {
+      console.error('Error in loadOnlineUsers:', error)
+    }
+  }, [getUserColor])
+
+  // Mark user as offline
+  const markOffline = useCallback(async () => {
+    if (!userId) return
+
+    try {
+      const { error } = await supabase
+        .from(TABLES.USER_PRESENCE)
+        .update({
+          is_online: false,
+          last_seen: new Date().toISOString()
+        })
+        .eq('user_id', userId)
+
+      if (error) {
+        console.error('Error marking user offline:', error)
+      }
+    } catch (error) {
+      console.error('Error in markOffline:', error)
+    }
+  }, [userId])
+
+  useEffect(() => {
+    if (!userId) return
+
+    // Initial setup
+    upsertPresence()
+    loadOnlineUsers()
+
+    // Subscribe to presence changes
+    const subscription = supabase
+      .channel('user_presence')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: TABLES.USER_PRESENCE,
+        },
+        (payload) => {
+          console.log('Presence change:', payload)
+          
+          // Reload online users when presence changes
+          loadOnlineUsers()
+        }
+      )
+      .subscribe()
+
+    subscriptionRef.current = subscription
+
+    // Update last_seen periodically
+    presenceIntervalRef.current = setInterval(() => {
+      upsertPresence()
+    }, REALTIME_CONFIG.PRESENCE_UPDATE_INTERVAL)
+
+    return () => {
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current)
+      }
+      if (presenceIntervalRef.current) {
+        clearInterval(presenceIntervalRef.current)
+      }
+    }
+  }, [userId, upsertPresence, loadOnlineUsers])
 
   // Mark user as offline on unmount
   useEffect(() => {
     return () => {
-      // TODO: Enable when database tables are created
-      console.log('User would be marked as offline')
+      markOffline()
     }
-  }, [userId])
+  }, [markOffline])
+
+  // Clean up stale users periodically
+  useEffect(() => {
+    const cleanupInterval = setInterval(async () => {
+      try {
+        const staleTime = new Date(Date.now() - REALTIME_CONFIG.PRESENCE_TIMEOUT)
+        
+        const { error } = await supabase
+          .from(TABLES.USER_PRESENCE)
+          .update({ is_online: false })
+          .lt('last_seen', staleTime.toISOString())
+          .eq('is_online', true)
+
+        if (error) {
+          console.error('Error cleaning up stale users:', error)
+        } else {
+          // Reload users after cleanup
+          loadOnlineUsers()
+        }
+      } catch (error) {
+        console.error('Error in cleanup interval:', error)
+      }
+    }, 30000) // Run every 30 seconds
+
+    return () => clearInterval(cleanupInterval)
+  }, [loadOnlineUsers])
 
   return {
     onlineUsers,

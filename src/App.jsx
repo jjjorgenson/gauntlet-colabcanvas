@@ -2,12 +2,17 @@ import { useState, useCallback } from 'react'
 import { AuthProvider, useAuth } from './components/Auth/AuthProvider'
 import { LoginForm } from './components/Auth/LoginForm'
 import { Canvas } from './components/Canvas/Canvas'
-import { Toolbar } from './components/Toolbar/Toolbar'
 import { UsersList } from './components/Presence/UsersList'
+import { usePresence } from './hooks/usePresence'
 import './App.css'
 
 const AppContent = () => {
   const { user, loading, logout, username } = useAuth()
+  
+  const { onlineUsers } = usePresence({ 
+    userId: user?.id, 
+    username: user?.user_metadata?.username || 'Anonymous' 
+  })
 
   if (loading) {
     return (
@@ -25,13 +30,16 @@ const AppContent = () => {
   return (
     <div className="app">
       <div className="app-header">
-        <Toolbar 
-          onAddRectangle={() => {}} // Will be handled by Canvas
-          selectedColor="#3B82F6"
-          onColorChange={() => {}}
-          onLogout={logout}
-          username={username}
-        />
+        <div className="header-content">
+          <h3>CollabCanvas</h3>
+          <span className="username">Welcome, {username}</span>
+          <button 
+            onClick={logout}
+            className="logout-button"
+          >
+            Logout
+          </button>
+        </div>
       </div>
       
       <div className="app-main">
@@ -41,7 +49,7 @@ const AppContent = () => {
         
         <div className="sidebar">
           <UsersList 
-            onlineUsers={[]}
+            onlineUsers={onlineUsers}
             currentUser={user}
           />
         </div>

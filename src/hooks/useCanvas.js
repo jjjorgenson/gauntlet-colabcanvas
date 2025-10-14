@@ -1,37 +1,62 @@
-import { useState, useCallback } from 'react'
-import { createRectangle, updateRectanglePosition } from '../utils/canvasHelpers'
+import { useState, useCallback, useSyncExternalStore } from 'react'
+import { 
+  createRectangle, 
+  createCircle, 
+  createTextBox, 
+  updateShapePosition as updateShapePositionHelper
+} from '../utils/canvasHelpers'
+import objectStore from '../lib/ObjectStore'
 
 export const useCanvas = () => {
-  const [shapes, setShapes] = useState([])
-  const [selectedShapeId, setSelectedShapeId] = useState(null)
+  // Use external store for objects and selection
+  const shapes = useSyncExternalStore(
+    objectStore.subscribe,
+    objectStore.getAll
+  )
+  const selectedShapeId = useSyncExternalStore(
+    objectStore.subscribe,
+    objectStore.getSelected
+  )
+  
+  // Keep color selection in React state (UI-only concern)
   const [selectedColor, setSelectedColor] = useState('#3B82F6')
 
   const addRectangle = useCallback((x, y) => {
     const newRectangle = createRectangle(x, y, selectedColor)
-    setShapes(prev => [...prev, newRectangle])
+    objectStore.add(newRectangle)
     return newRectangle
   }, [selectedColor])
 
+  const addCircle = useCallback((x, y) => {
+    const newCircle = createCircle(x, y, selectedColor)
+    objectStore.add(newCircle)
+    return newCircle
+  }, [selectedColor])
+
+  const addTextBox = useCallback((x, y) => {
+    const newTextBox = createTextBox(x, y, selectedColor)
+    objectStore.add(newTextBox)
+    return newTextBox
+  }, [selectedColor])
+
   const updateShapePosition = useCallback((shapeId, newPosition) => {
-    setShapes(prev => 
-      prev.map(shape => 
-        shape.id === shapeId 
-          ? updateRectanglePosition(shape, newPosition.x, newPosition.y)
-          : shape
-      )
-    )
+    const shape = objectStore.get(shapeId)
+    if (shape) {
+      const updatedShape = updateShapePositionHelper(shape, newPosition.x, newPosition.y)
+      objectStore.update(shapeId, updatedShape)
+    }
   }, [])
 
   const selectShape = useCallback((shapeId) => {
-    setSelectedShapeId(shapeId)
+    objectStore.setSelected(shapeId)
   }, [])
 
   const deselectAll = useCallback(() => {
-    setSelectedShapeId(null)
+    objectStore.setSelected(null)
   }, [])
 
   const setShapesFromRemote = useCallback((remoteShapes) => {
-    setShapes(remoteShapes)
+    objectStore.setAll(remoteShapes)
   }, [])
 
   return {
@@ -39,11 +64,15 @@ export const useCanvas = () => {
     selectedShapeId,
     selectedColor,
     addRectangle,
+    addCircle,
+    addTextBox,
     updateShapePosition,
     selectShape,
     deselectAll,
     setShapesFromRemote,
     setSelectedColor,
+    // Expose objectStore for direct access if needed
+    objectStore,
   }
 }
 

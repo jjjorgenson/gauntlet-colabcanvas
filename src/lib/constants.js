@@ -3,9 +3,12 @@ export const CANVAS_CONFIG = {
   WIDTH: 5000,
   HEIGHT: 5000,
   MIN_ZOOM: 0.1,
-  MAX_ZOOM: 3,
+  MAX_ZOOM: 5,
   DEFAULT_ZOOM: 1,
   ZOOM_STEP: 0.1,
+  ZOOM_ANIMATION_DURATION: 200, // ms
+  SIDEBAR_WIDTH: 200, // px
+  SHAPE_EDGE_PAN_THRESHOLD: 50, // px from edge when dragging shapes (future)
 }
 
 // Shape Configuration

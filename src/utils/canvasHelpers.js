@@ -21,6 +21,38 @@ export const createRectangle = (x, y, color = '#3B82F6') => ({
 })
 
 /**
+ * Create a new circle object
+ */
+export const createCircle = (x, y, color = '#3B82F6') => ({
+  id: generateId(),
+  type: 'circle',
+  x,
+  y,
+  width: 100,
+  height: 100,
+  color,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+})
+
+/**
+ * Create a new text box object
+ */
+export const createTextBox = (x, y, color = '#3B82F6', text = 'Double-click to edit') => ({
+  id: generateId(),
+  type: 'text',
+  x,
+  y,
+  width: 200,
+  height: 50,
+  color,
+  text_content: text,
+  font_size: 16,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+})
+
+/**
  * Update rectangle position
  */
 export const updateRectanglePosition = (rectangle, newX, newY) => ({
@@ -29,6 +61,42 @@ export const updateRectanglePosition = (rectangle, newX, newY) => ({
   y: newY,
   updated_at: new Date().toISOString(),
 })
+
+/**
+ * Update circle position
+ */
+export const updateCirclePosition = (circle, newX, newY) => ({
+  ...circle,
+  x: newX,
+  y: newY,
+  updated_at: new Date().toISOString(),
+})
+
+/**
+ * Update text box position
+ */
+export const updateTextBoxPosition = (textBox, newX, newY) => ({
+  ...textBox,
+  x: newX,
+  y: newY,
+  updated_at: new Date().toISOString(),
+})
+
+/**
+ * Update any shape position (generic)
+ */
+export const updateShapePosition = (shape, newX, newY) => {
+  switch (shape.type) {
+    case 'rectangle':
+      return updateRectanglePosition(shape, newX, newY)
+    case 'circle':
+      return updateCirclePosition(shape, newX, newY)
+    case 'text':
+      return updateTextBoxPosition(shape, newX, newY)
+    default:
+      return shape
+  }
+}
 
 /**
  * Check if a point is inside a rectangle

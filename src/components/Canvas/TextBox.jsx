@@ -1,6 +1,7 @@
 import { Text, Rect, Group } from 'react-konva'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { throttle } from '../../utils/syncHelpers'
+import { CANVAS_CONFIG } from '../../lib/constants'
 
 export const TextBox = ({ 
   textBox, 
@@ -46,11 +47,25 @@ export const TextBox = ({
 
   const handleDragEnd = (e) => {
     setIsDragging(false)
-    const newPos = {
-      x: e.target.x(),
-      y: e.target.y()
+    
+    // Get the current Group position (which is already top-left)
+    let newX = e.target.x()
+    let newY = e.target.y()
+    
+    // Ensure textbox stays within 5000x5000 workspace
+    newX = Math.max(0, Math.min(newX, CANVAS_CONFIG.WIDTH - textBox.width))
+    newY = Math.max(0, Math.min(newY, CANVAS_CONFIG.HEIGHT - textBox.height))
+    
+    // Update the visual position if it was constrained
+    if (newX !== e.target.x() || newY !== e.target.y()) {
+      e.target.position({ x: newX, y: newY })
     }
-    onDragEnd?.(textBox.id, newPos)
+    
+    // Use requestAnimationFrame to ensure position is set before updating store
+    requestAnimationFrame(() => {
+      const newPos = { x: newX, y: newY }
+      onDragEnd?.(textBox.id, newPos)
+    })
   }
 
   // Throttled transform handler for smooth resizing
@@ -72,6 +87,18 @@ export const TextBox = ({
     node.width(newWidth)
     node.height(newHeight)
     
+    // Update the Rect and Text inside the Group to match new dimensions
+    const rect = node.findOne('Rect')
+    const text = node.findOne('Text')
+    if (rect) {
+      rect.width(newWidth)
+      rect.height(newHeight)
+    }
+    if (text) {
+      text.width(newWidth)
+      text.height(newHeight)
+    }
+    
     // Use throttled handler for smooth updates
     handleTransformThrottled(textBox.id, {
       x: node.x(), // Use current Group position
@@ -92,8 +119,20 @@ export const TextBox = ({
     node.width(newWidth)
     node.height(newHeight)
     
+    // Update the Rect and Text inside the Group to match new dimensions
+    const rect = node.findOne('Rect')
+    const text = node.findOne('Text')
+    if (rect) {
+      rect.width(newWidth)
+      rect.height(newHeight)
+    }
+    if (text) {
+      text.width(newWidth)
+      text.height(newHeight)
+    }
+    
     // Send final update immediately (not throttled)
-    onTransform?.(textBox.id, {
+    onTransformEnd?.(textBox.id, {
       x: node.x(),
       y: node.y(),
       width: newWidth,

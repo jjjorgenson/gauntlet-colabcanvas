@@ -13,6 +13,41 @@
   z-index: 10;
 }
 
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.header-content h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.header-content .username {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.logout-button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background: #dc2626;
+}
+
 .app-main {
   flex: 1;
   display: flex;
@@ -25,11 +60,14 @@
 }
 
 .sidebar {
-  width: 250px;
+  width: 200px;
+  min-width: 200px;
+  flex-shrink: 0;
   background: white;
   border-left: 1px solid #e2e8f0;
   padding: 1rem;
   overflow-y: auto;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Loading States */
@@ -75,6 +113,51 @@
 .login-form p {
   margin: 0 0 2rem 0;
   color: #64748b;
+}
+
+/* Auth Tabs */
+.auth-tabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab-button:hover {
+  color: #374151;
+}
+
+.tab-button.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+}
+
+/* Verification Banner */
+.verification-banner {
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.verification-banner p {
+  margin: 0;
+  color: #0c4a6e;
+  font-size: 0.875rem;
 }
 
 .form-group {
@@ -261,6 +344,35 @@
   overflow: hidden;
 }
 
+/* Real-time Status Banner */
+.realtime-status-banner {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.realtime-status-banner span {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.status-disconnected {
+  background: rgba(239, 68, 68, 0.9) !important;
+}
+
+.status-pending {
+  background: rgba(245, 158, 11, 0.9) !important;
+}
+
 /* Canvas Toolbar */
 .canvas-toolbar {
   position: absolute;
@@ -274,4 +386,9 @@
   padding: 0.5rem 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.shape-buttons {
+  display: flex;
+  gap: 0.5rem;
 }
