@@ -1,16 +1,17 @@
 # CollabCanvas MVP - Task List (v2.0)
 
 ## 🎯 **PROGRESS SUMMARY**
-- ✅ **PR #1: Project Setup & Configuration** - COMPLETE
-- ✅ **PR #2: Authentication & Database Schema** - COMPLETE
-- ⏳ **PR #3: Canvas Foundation & All Shapes (with Resizing)** - IN PROGRESS
-- ⏳ **PR #4: Real-Time Multiplayer Sync & Presence** - PENDING
-- ⏳ **PR #5: Polish & Bug Fixes** - PENDING
-- ⏳ **PR #6: Documentation** - PENDING
-- ⏳ **PR #7: Advanced Features** - PENDING
+- ✅ **Phase 1: Setup + Authentication** - IN PROGRESS
+- ⏳ **Phase 2: Canvas Foundation (Single User)** - PENDING
+- ⏳ **Phase 3: Shape Creation & Manipulation (Single User)** - PENDING
+- ⏳ **Phase 4: Real-Time Sync (CRITICAL PATH)** - PENDING
+- ⏳ **Phase 5: State Persistence** - PENDING
+- ⏳ **Phase 6: Presence Awareness** - PENDING
+- ⏳ **Phase 7: Polish + Testing** - PENDING
+- ⏳ **Phase 8: Final Deployment** - PENDING
 
-**Current Status:** Database setup complete! Ready to work on canvas foundation.
-- 🎯 Next: Canvas foundation and shape creation
+**Current Status:** Database setup complete! Ready to complete authentication.
+- 🎯 Next: Complete email+password authentication implementation
 
 ### **✅ What's Currently Working:**
 - **Project Structure:** Basic React + Vite project with dependencies installed
@@ -68,9 +69,9 @@ collabcanvas/
 
 ---
 
-## PR #1: Project Setup & Configuration ✅ COMPLETE
+## Phase 1: Setup + Authentication ⏳ IN PROGRESS
 
-**Goal:** Initialize project with all dependencies and basic configuration
+**Goal:** Initialize project with all dependencies, setup Supabase, and implement email+password authentication
 
 ### ✅ Task 1.1: Initialize React Project
 - [x] Create new Vite + React project
@@ -117,19 +118,7 @@ collabcanvas/
   - GitHub: https://github.com/jjjorgenson/gauntlet-colabcanvas ✅
   - Vercel: https://gauntlet-colabcanvas.vercel.app ✅
 
----
-
-## PR #2: Authentication & Database Schema ✅ COMPLETE
-
-**Goal:** Implement email/password authentication + setup database tables
-
-### ✅ Task 2.1: Setup Supabase Auth Configuration
-- [ ] Configure Supabase Auth settings in dashboard
-- [ ] Enable email/password authentication
-- [ ] Configure authentication flow
-- **Files:** Supabase dashboard configuration only
-
-### ✅ Task 2.2: Create Complete Database Schema
+### ✅ Task 1.6: Database Schema Setup
 **Core Tables:**
 - [x] Create `canvas_objects` table with columns:
   - `id` (UUID, primary key)
@@ -167,7 +156,13 @@ collabcanvas/
 
 - **Files:** Supabase SQL Editor ✅
 
-### ✅ Task 2.3: Create Authentication Components
+### ✅ Task 1.7: Setup Supabase Auth Configuration
+- [ ] Configure Supabase Auth settings in dashboard
+- [ ] Enable email/password authentication
+- [ ] Configure authentication flow
+- **Files:** Supabase dashboard configuration only
+
+### ✅ Task 1.8: Create Authentication Components
 - [ ] Build LoginForm with email + password + username fields
 - [ ] Add signup/login toggle
 - [ ] Add validation
@@ -175,7 +170,7 @@ collabcanvas/
   - `src/components/Auth/LoginForm.jsx` ✅
   - `src/components/Auth/AuthProvider.jsx` ✅
 
-### ✅ Task 2.4: Create Authentication Hook
+### ✅ Task 1.9: Create Authentication Hook
 - [ ] Build `useAuth` hook for auth state management
 - [ ] Handle login/logout logic
 - [ ] Persist user session
@@ -183,7 +178,7 @@ collabcanvas/
 - **Files created:**
   - `src/hooks/useAuth.js` ✅
 
-### ✅ Task 2.5: Integrate Auth into App
+### ✅ Task 1.10: Integrate Auth into App
 - [ ] Wrap app with AuthProvider
 - [ ] Show LoginForm for unauthenticated users
 - [ ] Show Canvas for authenticated users
@@ -191,20 +186,20 @@ collabcanvas/
 - **Files updated:**
   - `src/App.jsx` ✅
 
-### ✅ Task 2.6: Test Authentication Flow
-- [ ] Test login with email/password ✅ TESTED
-- [ ] Test sign up with email/username/password ✅ TESTED
-- [ ] Verify auth session persistence on refresh ✅ TESTED
-- [ ] Test logout functionality ✅ TESTED
-- [ ] Deploy and verify on production ✅ TESTED
+### ✅ Task 1.11: Test Authentication Flow
+- [ ] Test login with email/password
+- [ ] Test sign up with email/username/password
+- [ ] Verify auth session persistence on refresh
+- [ ] Test logout functionality
+- [ ] Deploy and verify on production
 
 ---
 
-## PR #3: Canvas Foundation & All Shapes (with Resizing) ✅ COMPLETE
+## Phase 2: Canvas Foundation (Single User) ⏳ PENDING
 
-**Goal:** Create working canvas with pan, zoom, all shape types, and resizing (with persistence)
+**Goal:** Setup Konva.js Stage and Layer components with pan and zoom functionality
 
-### ✅ Task 3.1: Setup Konva Stage
+### ✅ Task 2.1: Setup Konva Stage
 - [ ] Create CanvasStage component with Konva Stage and Layer
 - [ ] Set up large workspace (5000x5000px)
 - [ ] Initialize stage reference
@@ -212,18 +207,24 @@ collabcanvas/
 - **Files created:**
   - `src/components/Canvas/CanvasStage.jsx` ✅
 
-### ✅ Task 3.2: Implement Pan Functionality
+### ✅ Task 2.2: Implement Pan Functionality
 - [ ] Add mouse drag to pan canvas
 - [ ] Update stage position on drag
-- [ ] Test: Can pan smoothly ✅ TESTED
+- [ ] Test: Can pan smoothly
 
-### ✅ Task 3.3: Implement Zoom Functionality
+### ✅ Task 2.3: Implement Zoom Functionality
 - [ ] Add mouse wheel zoom
 - [ ] Implement zoom to cursor position
 - [ ] Set min/max zoom limits
-- [ ] Test: Can zoom in/out smoothly ✅ TESTED
+- [ ] Test: Can zoom in/out smoothly
 
-### ✅ Task 3.4: Create All Shape Components
+---
+
+## Phase 3: Shape Creation & Manipulation (Single User) ⏳ PENDING
+
+**Goal:** Add rectangle, circle, and text box creation with drag, resize, and text editing functionality
+
+### ✅ Task 3.1: Create All Shape Components
 **Rectangle Component:**
 - [ ] Build Rectangle component using Konva Rect
 - [ ] Add drag-and-drop functionality with real-time updates
@@ -253,7 +254,7 @@ collabcanvas/
   - `src/components/Canvas/Circle.jsx` ✅
   - `src/components/Canvas/TextBox.jsx` ✅
 
-### ✅ Task 3.5: Build useCanvas Hook & Helpers
+### ✅ Task 3.2: Build useCanvas Hook & Helpers
 **Canvas State Management:**
 - [ ] Create hook for canvas state management
 - [ ] Implement addRectangle function
@@ -275,7 +276,7 @@ collabcanvas/
   - `src/hooks/useCanvas.js` ✅
   - `src/utils/canvasHelpers.js` ✅
 
-### ✅ Task 3.6: Build Main Canvas Component
+### ✅ Task 3.3: Build Main Canvas Component
 - [ ] Create Canvas.jsx with toolbar
 - [ ] Integrate all hooks
 - [ ] Add "Rectangle" button
@@ -288,18 +289,7 @@ collabcanvas/
 - **Files created:**
   - `src/components/Canvas/Canvas.jsx` ✅
 
-### ✅ Task 3.7: Connect to Database
-- [ ] Build useRealtimeSync hook
-- [ ] Implement broadcastShapeChange function
-- [ ] Load shapes from database on mount
-- [ ] Subscribe to INSERT/UPDATE/DELETE events
-- [ ] Test: Create shape → appears in database ✅ TESTED
-- [ ] Test: Refresh page → shapes reload ✅ TESTED
-- **Files created:**
-  - `src/hooks/useRealtimeSync.js` ✅
-  - `src/utils/syncHelpers.js` ✅
-
-### ✅ Task 3.8: Shape Resizing with Transformer
+### ✅ Task 3.4: Shape Resizing with Transformer
 **Transformer Setup:**
 - [ ] Import Transformer from react-konva
 - [ ] Create ref for Transformer
@@ -334,9 +324,9 @@ collabcanvas/
 
 ---
 
-## PR #4: Real-Time Multiplayer Sync & Presence ✅ COMPLETE
+## Phase 4: Real-Time Sync (CRITICAL PATH) ⏳ PENDING
 
-**Goal:** Enable real-time synchronization, multiplayer cursors, and presence awareness
+**Goal:** Setup Supabase real-time subscriptions and implement cursor position broadcasting with real-time updates
 
 ### ✅ Task 4.1: Enable Real-Time Shape Sync
 - [ ] Subscribe to canvas_objects INSERT events
@@ -409,20 +399,79 @@ collabcanvas/
 
 ---
 
+## Phase 5: State Persistence ⏳ PENDING
+
+**Goal:** Save canvas objects to Supabase PostgreSQL and handle page refresh without data loss
+
+### ✅ Task 5.1: Database Integration
+- [ ] Build useRealtimeSync hook
+- [ ] Implement broadcastShapeChange function
+- [ ] Load shapes from database on mount
+- [ ] Subscribe to INSERT/UPDATE/DELETE events
+- [ ] Test: Create shape → appears in database
+- [ ] Test: Refresh page → shapes reload
+- **Files created:**
+  - `src/hooks/useRealtimeSync.js` ✅
+  - `src/utils/syncHelpers.js` ✅
+
+### ✅ Task 5.2: Handle Reconnection Logic
+- [ ] Implement reconnection logic for lost connections
+- [ ] Handle page refresh without data loss
+- [ ] Test: Disconnect and reconnect → state restored
+
 ---
 
-## PR #5: Polish & Bug Fixes ⏳ PENDING
+## Phase 6: Presence Awareness ⏳ PENDING
+
+**Goal:** Track online users in Supabase and display list of currently connected users
+
+### ✅ Task 6.1: Build usePresence Hook
+- [ ] Upsert user on mount
+- [ ] Load all online users on mount
+- [ ] Subscribe to presence changes
+- [ ] Update last_seen periodically
+- [ ] Delete presence on unmount
+- **Files created:**
+  - `src/hooks/usePresence.js` ✅
+
+### ✅ Task 6.2: Create UsersList Component
+- [ ] Display online users with colored dots
+- [ ] Show user count
+- [ ] Highlight current user
+- [ ] Show "Loading..." if empty
+- **Files created:**
+  - `src/components/Presence/UsersList.jsx` ✅
+
+### ✅ Task 6.3: Integrate into App
+- [ ] Call usePresence in App.jsx (NOT in Canvas.jsx)
+- [ ] Pass onlineUsers to UsersList via props
+- [ ] Verify no duplicate usePresence calls
+- [ ] Test: See yourself + others in sidebar
+- **Files updated:**
+  - `src/App.jsx` ✅
+
+### ✅ Task 6.4: Make Sidebar Always Visible
+- [ ] Add min-width and flex-shrink: 0 to sidebar
+- [ ] Add blue border for visibility
+- [ ] Add box-shadow
+- [ ] Test: Sidebar never hides when resizing
+- **Files updated:**
+  - `src/App.css` ✅
+
+---
+
+## Phase 7: Polish + Testing ⏳ PENDING
 
 **Goal:** Clean up, fix bugs, optimize performance
 
-### ✅ Task 5.1: Code Cleanup
+### ✅ Task 7.1: Code Cleanup
 - [ ] Remove all `console.log` debug statements ✅
 - [ ] Remove unused imports ✅
 - [ ] Add JSDoc comments to functions ✅
 - [ ] Format code consistently ✅
 - **Files updated:** All files
 
-### ✅ Task 5.2: Error Handling
+### ✅ Task 7.2: Error Handling
 - [ ] Add error boundaries in App.jsx ✅
 - [ ] Handle Supabase connection errors gracefully ✅
 - [ ] Show user-friendly error messages ✅
@@ -434,7 +483,7 @@ collabcanvas/
   - `src/components/ErrorBoundary.jsx` (new)
   - `src/components/LoadingSpinner.jsx` (new)
 
-### ☐ Task 5.3: Ownership System + Performance Optimization
+### ☐ Task 7.3: Ownership System + Performance Optimization
 **Database Changes:** (Consolidated into Task 2.2)
 - [x] All database schema changes moved to Task 2.2
 
@@ -475,20 +524,20 @@ collabcanvas/
 - [ ] Test: User A clicks owned shape → refreshes 45-second timeout
 - [ ] Test: Performance remains smooth with ownership system active
 
-### ☐ Task 5.4: Shape Delete Feature (Optional)
+### ☐ Task 7.4: Shape Delete Feature (Optional)
 - [ ] Add delete key handler
 - [ ] Delete selected shape from local state
 - [ ] Broadcast DELETE to database
 - [ ] Test: Delete shape → disappears for all users ⚠️
 
-### ☐ Task 5.5: UI/UX Improvements
+### ☐ Task 7.5: UI/UX Improvements
 - [ ] Add keyboard shortcuts (Esc to deselect, etc.)
 - [ ] Add loading spinner when loading shapes
 - [ ] Improve toolbar button styling
 - [ ] Add hover states to shapes
 - [ ] Add tooltips to toolbar buttons
 
-### ☐ Task 5.6: Final Testing
+### ☐ Task 7.6: Final Testing
 - [ ] Test all shape types (create, move, resize, delete)
 - [ ] Test with 3+ concurrent users
 - [ ] Test on different browsers (Chrome, Firefox, Safari)
@@ -498,11 +547,18 @@ collabcanvas/
 
 ---
 
-## PR #6: Documentation ⏳ PENDING
+## Phase 8: Final Deployment ⏳ PENDING
 
-**Goal:** Complete documentation and deployment
+**Goal:** Deploy to production, verify public URL accessibility, and create documentation
 
-### ☐ Task 6.1: Update README
+### ☐ Task 8.1: Deploy to Production
+- [ ] Push all changes to GitHub
+- [ ] Verify Vercel auto-deploys
+- [ ] Test production URL
+- [ ] Load test with multiple users
+- [ ] Monitor for errors in production
+
+### ☐ Task 8.2: Update README
 - [ ] Add project overview and features
 - [ ] Add screenshots/GIFs of app in action
 - [ ] Update setup instructions
@@ -512,15 +568,15 @@ collabcanvas/
 - **Files to update:**
   - `README.md`
 
-### ☐ Task 6.2: Create SQL Migration File (Optional)
-- [ ] Create `migrations.sql` with all schema setup (consolidated from Task 2.2)
+### ☐ Task 8.3: Create SQL Migration File (Optional)
+- [ ] Create `migrations.sql` with all schema setup (consolidated from Task 1.6)
 - [ ] Include both tables, policies, indexes, and RPC functions
 - [ ] Add comments explaining each section
-- **Note:** All database setup is now consolidated in Task 2.2
+- **Note:** All database setup is now consolidated in Task 1.6
 - **Files to create:**
   - `migrations.sql`
 
-### ☐ Task 6.3: Architecture Documentation
+### ☐ Task 8.4: Architecture Documentation
 - [ ] Document component hierarchy
 - [ ] Document data flow
 - [ ] Document real-time sync strategy
@@ -529,41 +585,32 @@ collabcanvas/
 - **Files to create:**
   - `ARCHITECTURE.md`
 
-### ☐ Task 6.4: Final Deployment
-- [ ] Push all changes to GitHub
-- [ ] Verify Vercel auto-deploys
-- [ ] Test production URL
-- [ ] Share URL for user testing
-- [ ] Monitor for errors in production
-
 ---
 
-## PR #7: Advanced Performance & Ownership ⏳ PENDING
+## 🚀 **FUTURE ENHANCEMENTS (Post-MVP)**
 
-**Goal:** Enhanced performance optimizations and advanced ownership features
-
-### ☐ Task 7.1: Advanced Ownership Features
+### Advanced Ownership Features
 - [ ] Implement ownership transfer (steal ownership)
 - [ ] Add ownership conflict resolution
 - [ ] Add ownership history/audit trail
 - [ ] Implement group ownership for multiple objects
 - [ ] Add ownership notifications/alerts
 
-### ☐ Task 7.2: Enhanced Performance Optimizations
+### Enhanced Performance Optimizations
 - [ ] Implement JSON diff/patch for updates
 - [ ] Add data compression for large payloads
 - [ ] Optimize network update frequency (10-20 Hz)
 - [ ] Add visual interpolation for smooth movement
 - [ ] Implement update queuing for offline scenarios
 
-### ☐ Task 7.3: Advanced UI/UX Features
+### Advanced UI/UX Features
 - [ ] Multi-select with Ctrl+click
 - [ ] Group operations (move, resize, delete)
 - [ ] Undo/Redo functionality
 - [ ] Advanced keyboard shortcuts
 - [ ] Performance monitoring dashboard
 
-### ☐ Task 7.4: Scalability Improvements
+### Scalability Improvements
 - [ ] Test with 10+ concurrent users
 - [ ] Implement object virtualization for large canvases
 - [ ] Add pagination for shape loading

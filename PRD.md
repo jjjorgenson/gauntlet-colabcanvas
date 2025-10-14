@@ -27,10 +27,11 @@ Build a real-time collaborative canvas (Figma-like) where multiple users can sim
 ## Key Features for MVP
 
 ### 1. Authentication & User Management
-- Username-only authentication via Supabase Auth
+- Email + password authentication via Supabase Auth
+- Username stored in user metadata for display
 - User identity persisted across sessions
 - Display user name in cursor labels
-- No password required for MVP
+- Sign up and login functionality
 
 ### 2. Canvas Foundation
 - **Pan**: Click and drag to move around workspace
@@ -39,10 +40,12 @@ Build a real-time collaborative canvas (Figma-like) where multiple users can sim
 - Smooth 60 FPS performance during interactions
 
 ### 3. Shape Creation & Manipulation
-- **At least one shape type** (recommend starting with rectangles as they're simplest)
+- **Three shape types**: Rectangles, circles, and text boxes
 - Create shapes via button click or toolbar
 - Move shapes by drag-and-drop
+- Resize shapes with transform handles
 - Basic visual properties (color, size, position)
+- Text editing with double-click functionality
 
 ### 4. Real-Time Collaboration
 - **Multiplayer cursors**: Show all connected users' cursor positions with name labels
@@ -293,13 +296,12 @@ Build a real-time collaborative canvas (Figma-like) where multiple users can sim
 
 ### Explicitly NOT included:
 - AI Canvas Agent (Phase 2)
-- Multiple shape types beyond one (start with rectangles)
-- Text layers with formatting
+- Text layers with advanced formatting
 - Rotation, advanced transforms
 - Multi-select (shift-click, drag-to-select)
 - Layer management and z-ordering
 - Delete, duplicate, undo/redo
-- Color pickers or style panels
+- Advanced color pickers or style panels
 - Export/save functionality
 - Real-time chat or comments
 - Permissions or access control
@@ -331,7 +333,7 @@ Build a real-time collaborative canvas (Figma-like) where multiple users can sim
 ### Phase 1: Setup + Authentication
 - Initialize React project with Vite/Create-React-App
 - Setup Supabase project and client configuration
-- Implement basic authentication (email/password or magic link)
+- Implement email + password authentication with username storage
 - Deploy "Hello World" to Vercel to verify deployment pipeline
 - Confirm Supabase connection working
 
@@ -343,17 +345,20 @@ Build a real-time collaborative canvas (Figma-like) where multiple users can sim
 - Basic canvas rendering with smooth performance
 
 ### Phase 3: Shape Creation & Manipulation (Single User)
-- Add rectangle creation (button or toolbar)
-- Implement drag-to-move for rectangles
+- Add rectangle, circle, and text box creation (buttons or toolbar)
+- Implement drag-to-move for all shape types
+- Add resize functionality with transform handles
+- Add text editing with double-click
 - Add basic properties (position, size, color)
 - Test smooth interactions at 60 FPS
 
 ### Phase 4: Real-Time Sync (CRITICAL PATH)
 - Setup Supabase real-time subscriptions
-- Implement cursor position broadcasting
-- Add cursor rendering with user labels
-- Implement object creation sync
-- Implement object movement sync
+- Implement cursor position broadcasting with real-time updates
+- Add cursor rendering with user labels and smooth movement
+- Implement object creation sync for all shape types
+- Implement object movement sync with real-time updates
+- Implement object resize sync with real-time updates
 - Test with multiple browser windows
 - **Success criteria:** Two users see each other's cursors and shape changes instantly
 
