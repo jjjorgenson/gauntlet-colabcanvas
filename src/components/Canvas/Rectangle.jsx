@@ -8,6 +8,8 @@ export const Rectangle = ({
   onSelect,
   onDragEnd,
   onDragStart,
+  onDragMove,
+  onDragMoveBroadcast,
   onTransform,
   onTransformEnd
 }) => {
@@ -16,6 +18,23 @@ export const Rectangle = ({
   const handleDragStart = (e) => {
     setIsDragging(true)
     onDragStart?.(rectangle.id)
+  }
+
+  const handleDragMove = (e) => {
+    if (isDragging) {
+      const stage = e.target.getStage()
+      const pointer = stage.getPointerPosition()
+      if (pointer) {
+        onDragMove?.(pointer.x, pointer.y)
+        
+        // Broadcast position update during drag
+        const newPos = {
+          x: e.target.x(),
+          y: e.target.y()
+        }
+        onDragMoveBroadcast?.(rectangle.id, newPos)
+      }
+    }
   }
 
   const handleDragEnd = (e) => {
@@ -88,6 +107,7 @@ export const Rectangle = ({
       strokeWidth={isSelected ? 2 : 1}
       draggable
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       onTransform={handleTransform}
       onTransformEnd={handleTransformEnd}

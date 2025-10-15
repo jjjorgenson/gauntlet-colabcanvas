@@ -174,6 +174,15 @@ export const Canvas = ({ user }) => {
     }
   }, [shapes, updateShapePosition, broadcastShapeChange])
 
+  const handleShapeDragMoveBroadcast = useCallback((shapeId, newPosition) => {
+    // Broadcast position updates during drag for real-time sync
+    const updatedShape = shapes.find(s => s.id === shapeId)
+    if (updatedShape) {
+      const shapeWithNewPos = { ...updatedShape, ...newPosition }
+      broadcastShapeChange(shapeWithNewPos, 'update')
+    }
+  }, [shapes, broadcastShapeChange])
+
   const handleTextChange = useCallback((shapeId, newText) => {
     // Update ObjectStore
     objectStore.update(shapeId, { text_content: newText })
@@ -275,6 +284,7 @@ export const Canvas = ({ user }) => {
                   isSelected={isSelected}
                   onSelect={handleShapeSelect}
                   onDragEnd={handleShapeDragEnd}
+                  onDragMoveBroadcast={handleShapeDragMoveBroadcast}
                   onTransform={handleShapeTransform}
                   onTransformEnd={handleShapeTransform}
                 />
@@ -287,6 +297,7 @@ export const Canvas = ({ user }) => {
                   isSelected={isSelected}
                   onSelect={handleShapeSelect}
                   onDragEnd={handleShapeDragEnd}
+                  onDragMoveBroadcast={handleShapeDragMoveBroadcast}
                   onTransform={handleShapeTransform}
                   onTransformEnd={handleShapeTransform}
                 />
@@ -301,6 +312,7 @@ export const Canvas = ({ user }) => {
                   isOwnedByOther={false}
                   onSelect={handleShapeSelect}
                   onDragEnd={handleShapeDragEnd}
+                  onDragMoveBroadcast={handleShapeDragMoveBroadcast}
                   onTextChange={handleTextChange}
                   onTransform={handleShapeTransform}
                   onTransformEnd={handleShapeTransform}

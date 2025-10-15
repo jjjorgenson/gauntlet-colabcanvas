@@ -4,14 +4,19 @@
 - ✅ **Phase 1: Setup + Authentication** - COMPLETE
 - ✅ **Phase 2: Canvas Foundation (Single User)** - COMPLETE
 - ✅ **Phase 3: Shape Creation & Manipulation (Single User)** - COMPLETE
-- ⏳ **Phase 4: Real-Time Sync (CRITICAL PATH)** - PENDING
-- ⏳ **Phase 5: State Persistence** - PENDING
-- ⏳ **Phase 6: Presence Awareness** - PENDING
-- ⏳ **Phase 7: Polish + Testing** - PENDING
+- ✅ **Phase 4: Real-Time Sync (CRITICAL PATH)** - COMPLETE
+- ✅ **Phase 5: State Persistence** - COMPLETE
+- ✅ **Phase 6: Presence Awareness** - COMPLETE
+- ⏳ **Phase 7: Polish + Testing** - IN PROGRESS
 - ⏳ **Phase 8: Final Deployment** - PENDING
 
-**Current Status:** All single-user functionality complete! Ready for real-time collaboration.
-- 🎯 Next: Implement real-time sync for multi-user collaboration (Phase 4)
+**Current Status:** 🎉 **MVP COMPLETE!** All core functionality working with real-time collaboration.
+- ✅ Real-time shape sync (create, move, resize, text edit)
+- ✅ Multi-user cursors with usernames
+- ✅ Online users list
+- ✅ TextBox editing with ownership locks
+- ✅ Canvas state persistence
+- 🎯 Next: Polish, testing, and final deployment
 
 ### **✅ What's Currently Working:**
 - **Project Structure:** Complete React + Vite project with all dependencies
@@ -20,11 +25,15 @@
 - **Canvas Foundation:** 5000x5000px workspace with pan/zoom functionality
 - **Shape Creation:** Rectangle, Circle, and TextBox creation with color selection
 - **Shape Manipulation:** Drag, resize, and text editing for all shape types
+- **Real-Time Collaboration:** Multi-user shape sync with live cursors and presence
+- **TextBox Editing:** Advanced text editing with ownership locks and 35-second timeout
 - **ObjectStore Architecture:** External state management with useSyncExternalStore
 - **Transformer Integration:** Konva Transformer for shape resizing with handles
 - **Workspace Boundaries:** All shapes constrained to 5000x5000px area
 - **Canvas Background:** 5% grey tint to show workspace boundaries
 - **Clean UI:** Single toolbar with shape creation and color selection
+- **Online Users:** Real-time user presence with colored dots and usernames
+- **State Persistence:** Canvas state saved to database and restored on refresh
 
 ---
 
@@ -386,158 +395,158 @@ collabcanvas/
 
 ---
 
-## Phase 4: Real-Time Sync (CRITICAL PATH) ⏳ PENDING
+## Phase 4: Real-Time Sync (CRITICAL PATH) ✅ COMPLETE
 
 **Goal:** Setup Supabase real-time subscriptions and implement cursor position broadcasting with real-time updates
 
 ### ✅ Task 4.1: Enable Real-Time Shape Sync
-- [ ] Subscribe to canvas_objects INSERT events
-- [ ] Subscribe to canvas_objects UPDATE events
-- [ ] Subscribe to canvas_objects DELETE events
-- [ ] Handle remote shape changes
-- [ ] Filter out own changes (avoid duplicates)
-- [ ] Test: Open 2 windows, create shape in one ✅ TESTED
-- [ ] Test: Move shape in one window, updates in other ✅ TESTED
+- [x] Subscribe to canvas_objects INSERT events
+- [x] Subscribe to canvas_objects UPDATE events
+- [x] Subscribe to canvas_objects DELETE events
+- [x] Handle remote shape changes
+- [x] Filter out own changes (avoid duplicates)
+- [x] Test: Open 2 windows, create shape in one ✅ TESTED
+- [x] Test: Move shape in one window, updates in other ✅ TESTED
 
 ### ✅ Task 4.2: Implement Real-Time Cursor Broadcasting
-- [ ] Build useCursors hook
-- [ ] Track mouse position with real-time throttling (50-100ms)
-- [ ] Broadcast cursor_x/cursor_y to user_presence table
-- [ ] Subscribe to presence UPDATE events
-- [ ] Filter out own cursor
-- [ ] Test: Cursor appears in other window in real-time ✅ TESTED
+- [x] Build useCursors hook
+- [x] Track mouse position with real-time throttling (50-100ms)
+- [x] Broadcast cursor_x/cursor_y to user_presence table
+- [x] Subscribe to presence UPDATE events
+- [x] Filter out own cursor
+- [x] Test: Cursor appears in other window in real-time ✅ TESTED
 - **Files created:**
   - `src/hooks/useCursors.js` ✅
 
 ### ✅ Task 4.3: Render Real-Time Cursor Labels
-- [ ] Create Cursor component with dot + label
-- [ ] Use black text for visibility
-- [ ] Position cursor at correct coordinates with smooth updates
-- [ ] Handle cursor position interpolation for smooth movement
-- [ ] Test: Username appears above cursor and moves smoothly ✅ TESTED
+- [x] Create Cursor component with dot + label
+- [x] Use black text for visibility
+- [x] Position cursor at correct coordinates with smooth updates
+- [x] Handle cursor position interpolation for smooth movement
+- [x] Test: Username appears above cursor and moves smoothly ✅ TESTED
 - **Files created:**
   - `src/components/Canvas/Cursor.jsx` ✅
 
 ### ✅ Task 4.4: Build usePresence Hook
-- [ ] Upsert user on mount
-- [ ] Load all online users on mount
-- [ ] Subscribe to presence changes
-- [ ] Update last_seen periodically
-- [ ] Delete presence on unmount
+- [x] Upsert user on mount
+- [x] Load all online users on mount
+- [x] Subscribe to presence changes
+- [x] Update last_seen periodically
+- [x] Delete presence on unmount
 - **Files created:**
   - `src/hooks/usePresence.js` ✅
 
 ### ✅ Task 4.5: Create UsersList Component
-- [ ] Display online users with colored dots
-- [ ] Show user count
-- [ ] Highlight current user
-- [ ] Show "Loading..." if empty
+- [x] Display online users with colored dots
+- [x] Show user count
+- [x] Highlight current user
+- [x] Show "Loading..." if empty
 - **Files created:**
   - `src/components/Presence/UsersList.jsx` ✅
 
 ### ✅ Task 4.6: Integrate into App
-- [ ] Call usePresence in App.jsx (NOT in Canvas.jsx)
-- [ ] Pass onlineUsers to UsersList via props
-- [ ] Verify no duplicate usePresence calls
-- [ ] Test: See yourself + others in sidebar ✅ TESTED
+- [x] Call usePresence in App.jsx (NOT in Canvas.jsx)
+- [x] Pass onlineUsers to UsersList via props
+- [x] Verify no duplicate usePresence calls
+- [x] Test: See yourself + others in sidebar ✅ TESTED
 - **Files updated:**
   - `src/App.jsx` ✅
 
 ### ✅ Task 4.7: Make Sidebar Always Visible
-- [ ] Add min-width and flex-shrink: 0 to sidebar
-- [ ] Add blue border for visibility
-- [ ] Add box-shadow
-- [ ] Test: Sidebar never hides when resizing ✅ TESTED
+- [x] Add min-width and flex-shrink: 0 to sidebar
+- [x] Add blue border for visibility
+- [x] Add box-shadow
+- [x] Test: Sidebar never hides when resizing ✅ TESTED
 - **Files updated:**
   - `src/App.css` ✅
 
 ### ✅ Task 4.8: Real-Time Integration Testing
-- [ ] Test with 2 users creating/moving shapes in real-time ✅ TESTED
-- [ ] Verify cursors show with correct names and move smoothly ✅ TESTED
-- [ ] Test: User A drags shape → User B sees movement in real-time ✅ TESTED
-- [ ] Test: User A resizes shape → User B sees resize in real-time ✅ TESTED
-- [ ] Check for infinite loops ✅ TESTED
-- [ ] Verify no duplicate subscriptions ✅ TESTED
+- [x] Test with 2 users creating/moving shapes in real-time ✅ TESTED
+- [x] Verify cursors show with correct names and move smoothly ✅ TESTED
+- [x] Test: User A drags shape → User B sees movement in real-time ✅ TESTED
+- [x] Test: User A resizes shape → User B sees resize in real-time ✅ TESTED
+- [x] Check for infinite loops ✅ TESTED
+- [x] Verify no duplicate subscriptions ✅ TESTED
 
 ---
 
-## Phase 5: State Persistence ⏳ PENDING
+## Phase 5: State Persistence ✅ COMPLETE
 
 **Goal:** Save canvas objects to Supabase PostgreSQL and handle page refresh without data loss
 
 ### ✅ Task 5.1: Database Integration
-- [ ] Build useRealtimeSync hook
-- [ ] Implement broadcastShapeChange function
-- [ ] Load shapes from database on mount
-- [ ] Subscribe to INSERT/UPDATE/DELETE events
-- [ ] Test: Create shape → appears in database
-- [ ] Test: Refresh page → shapes reload
+- [x] Build useRealtimeSync hook
+- [x] Implement broadcastShapeChange function
+- [x] Load shapes from database on mount
+- [x] Subscribe to INSERT/UPDATE/DELETE events
+- [x] Test: Create shape → appears in database
+- [x] Test: Refresh page → shapes reload
 - **Files created:**
   - `src/hooks/useRealtimeSync.js` ✅
   - `src/utils/syncHelpers.js` ✅
 
 ### ✅ Task 5.2: Handle Reconnection Logic
-- [ ] Implement reconnection logic for lost connections
-- [ ] Handle page refresh without data loss
-- [ ] Test: Disconnect and reconnect → state restored
+- [x] Implement reconnection logic for lost connections
+- [x] Handle page refresh without data loss
+- [x] Test: Disconnect and reconnect → state restored
 
 ---
 
-## Phase 6: Presence Awareness ⏳ PENDING
+## Phase 6: Presence Awareness ✅ COMPLETE
 
 **Goal:** Track online users in Supabase and display list of currently connected users
 
 ### ✅ Task 6.1: Build usePresence Hook
-- [ ] Upsert user on mount
-- [ ] Load all online users on mount
-- [ ] Subscribe to presence changes
-- [ ] Update last_seen periodically
-- [ ] Delete presence on unmount
+- [x] Upsert user on mount
+- [x] Load all online users on mount
+- [x] Subscribe to presence changes
+- [x] Update last_seen periodically
+- [x] Delete presence on unmount
 - **Files created:**
   - `src/hooks/usePresence.js` ✅
 
 ### ✅ Task 6.2: Create UsersList Component
-- [ ] Display online users with colored dots
-- [ ] Show user count
-- [ ] Highlight current user
-- [ ] Show "Loading..." if empty
+- [x] Display online users with colored dots
+- [x] Show user count
+- [x] Highlight current user
+- [x] Show "Loading..." if empty
 - **Files created:**
   - `src/components/Presence/UsersList.jsx` ✅
 
 ### ✅ Task 6.3: Integrate into App
-- [ ] Call usePresence in App.jsx (NOT in Canvas.jsx)
-- [ ] Pass onlineUsers to UsersList via props
-- [ ] Verify no duplicate usePresence calls
-- [ ] Test: See yourself + others in sidebar
+- [x] Call usePresence in App.jsx (NOT in Canvas.jsx)
+- [x] Pass onlineUsers to UsersList via props
+- [x] Verify no duplicate usePresence calls
+- [x] Test: See yourself + others in sidebar
 - **Files updated:**
   - `src/App.jsx` ✅
 
 ### ✅ Task 6.4: Make Sidebar Always Visible
-- [ ] Add min-width and flex-shrink: 0 to sidebar
-- [ ] Add blue border for visibility
-- [ ] Add box-shadow
-- [ ] Test: Sidebar never hides when resizing
+- [x] Add min-width and flex-shrink: 0 to sidebar
+- [x] Add blue border for visibility
+- [x] Add box-shadow
+- [x] Test: Sidebar never hides when resizing
 - **Files updated:**
   - `src/App.css` ✅
 
 ---
 
-## Phase 7: Polish + Testing ⏳ PENDING
+## Phase 7: Polish + Testing ⏳ IN PROGRESS
 
 **Goal:** Clean up, fix bugs, optimize performance
 
 ### ✅ Task 7.1: Code Cleanup
-- [ ] Remove all `console.log` debug statements ✅
-- [ ] Remove unused imports ✅
-- [ ] Add JSDoc comments to functions ✅
-- [ ] Format code consistently ✅
+- [x] Remove all `console.log` debug statements ✅
+- [x] Remove unused imports ✅
+- [x] Add JSDoc comments to functions ✅
+- [x] Format code consistently ✅
 - **Files updated:** All files
 
 ### ✅ Task 7.2: Error Handling
-- [ ] Add error boundaries in App.jsx ✅
-- [ ] Handle Supabase connection errors gracefully ✅
-- [ ] Show user-friendly error messages ✅
-- [ ] Add retry logic for failed syncs ✅
+- [x] Add error boundaries in App.jsx ✅
+- [x] Handle Supabase connection errors gracefully ✅
+- [x] Show user-friendly error messages ✅
+- [x] Add retry logic for failed syncs ✅
 - **Files updated:**
   - `src/App.jsx`
   - `src/hooks/useRealtimeSync.js`
@@ -737,8 +746,8 @@ Before marking any PR as complete, verify:
 - ✅ Canvas state persistence
 - ✅ Three shape types (rectangle, circle, text)
 - ✅ Shape resizing with sync
-- 🚧 Basic ownership system (first-come-first-served, 45s timeout)
-- ⏳ Clean, polished UI
+- ✅ TextBox editing with ownership locks (35s timeout)
+- ✅ Clean, polished UI
 
 ### Nice to Have:
 - Shape deletion

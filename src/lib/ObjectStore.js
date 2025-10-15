@@ -197,6 +197,7 @@ class ObjectStore {
    */
   setEditing(id) {
     this.editingIds.add(id)
+    // console.log('🔒 ObjectStore: Set editing for', id, 'Current editing:', Array.from(this.editingIds))
     this.notify()
   }
 
@@ -206,6 +207,7 @@ class ObjectStore {
    */
   setNotEditing(id) {
     this.editingIds.delete(id)
+    // console.log('🔓 ObjectStore: Set not editing for', id, 'Current editing:', Array.from(this.editingIds))
     this.notify()
   }
 

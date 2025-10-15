@@ -162,7 +162,7 @@ export const usePresence = ({ userId, username }) => {
           table: TABLES.USER_PRESENCE,
         },
         (payload) => {
-          console.log('Presence change:', payload)
+          // console.log('Presence change:', payload)
           
           // Reload online users when presence changes
           loadOnlineUsers()

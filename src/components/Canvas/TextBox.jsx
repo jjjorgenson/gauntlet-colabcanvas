@@ -165,8 +165,6 @@ export const TextBox = ({
 
   const handleTextSave = useCallback((newText) => {
     // console.log('💾 SAVING: TextBox', textBox.id, 'with text:', newText)
-    // console.log('💾 SAVING: inputRef.current:', inputRef.current)
-    // console.log('💾 SAVING: inputRef.current?.value:', inputRef.current?.value)
     // Clear any pending timeouts
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current)
@@ -189,6 +187,7 @@ export const TextBox = ({
   }, [textBox.id, onTextChange])
 
   const handleTextCancel = useCallback(() => {
+    // console.log('❌ CANCELING: TextBox', textBox.id)
     // Clear any pending timeouts
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current)
@@ -201,6 +200,7 @@ export const TextBox = ({
     
     // Mark as no longer editing in ObjectStore
     objectStore.setNotEditing(textBox.id)
+    // console.log('🔓 UNLOCKED: TextBox', textBox.id)
     
     setIsEditing(false)
     setLocalText('')
@@ -217,9 +217,23 @@ export const TextBox = ({
   // Exit editing mode when clicking outside - handled by parent Canvas component
   useEffect(() => {
     if (onExitEditing && isEditing) {
+      // Clear any pending timeouts
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current)
+        blurTimeoutRef.current = null
+      }
+      if (ownershipTimeoutRef.current) {
+        clearTimeout(ownershipTimeoutRef.current)
+        ownershipTimeoutRef.current = null
+      }
+      
+      // Mark as no longer editing in ObjectStore
+      objectStore.setNotEditing(textBox.id)
+      
       setIsEditing(false)
+      setLocalText('')
     }
-  }, [onExitEditing, isEditing])
+  }, [onExitEditing, isEditing, textBox.id])
 
   // Cleanup timeouts on unmount
   useEffect(() => {

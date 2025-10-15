@@ -8,6 +8,8 @@ export const Circle = ({
   onSelect, 
   onDragEnd, 
   onDragStart,
+  onDragMove,
+  onDragMoveBroadcast,
   onTransform,
   onTransformEnd
 }) => {
@@ -16,6 +18,24 @@ export const Circle = ({
   const handleDragStart = (e) => {
     setIsDragging(true)
     onDragStart?.(circle.id)
+  }
+
+  const handleDragMove = (e) => {
+    if (isDragging) {
+      const stage = e.target.getStage()
+      const pointer = stage.getPointerPosition()
+      if (pointer) {
+        onDragMove?.(pointer.x, pointer.y)
+        
+        // Broadcast position update during drag
+        const radius = circle.width / 2
+        const newPos = {
+          x: e.target.x() - radius,
+          y: e.target.y() - radius
+        }
+        onDragMoveBroadcast?.(circle.id, newPos)
+      }
+    }
   }
 
   const handleDragEnd = (e) => {
@@ -95,6 +115,7 @@ export const Circle = ({
       strokeWidth={isSelected ? 2 : 1}
       draggable
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       onTransform={handleTransform}
       onTransformEnd={handleTransformEnd}

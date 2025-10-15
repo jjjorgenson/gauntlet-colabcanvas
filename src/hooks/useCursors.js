@@ -82,7 +82,7 @@ export const useCursors = ({ userId, username }) => {
 
     // Subscribe to the channel
     cursorChannel.subscribe((status) => {
-      console.log('Cursor channel status:', status)
+      // console.log('Cursor channel status:', status)
     })
 
     cursorChannelRef.current = cursorChannel

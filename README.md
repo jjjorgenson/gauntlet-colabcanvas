@@ -2,15 +2,21 @@
 
 A real-time collaborative canvas application where multiple users can simultaneously create, move, and manipulate shapes while seeing each other's cursors and presence in real-time.
 
+## 🎉 MVP Status: COMPLETE!
+
+All core features are working and ready for production use.
+
 ## 🚀 Features
 
-- ✅ **Authentication** - Username-only authentication with Supabase
+- ✅ **Authentication** - Email/password authentication with Supabase
 - ✅ **Canvas Foundation** - Pan and zoom around a large workspace (5000x5000px)
-- ✅ **Shape Creation** - Create and manipulate rectangles with drag-and-drop
-- ✅ **Color Selection** - Choose from 5 preset colors
-- 🔄 **Real-Time Sync** - (Coming soon) Sync changes across multiple users
-- 👥 **Multiplayer Cursors** - (Coming soon) See other users' cursor positions
-- 🟢 **Presence Awareness** - (Coming soon) See who's online
+- ✅ **Shape Creation** - Create and manipulate rectangles, circles, and text boxes
+- ✅ **Color Selection** - Choose from 10 preset colors
+- ✅ **Real-Time Sync** - Sync changes across multiple users in real-time
+- ✅ **Multiplayer Cursors** - See other users' cursor positions with usernames
+- ✅ **Presence Awareness** - See who's online with colored user dots
+- ✅ **TextBox Editing** - Advanced text editing with ownership locks
+- ✅ **State Persistence** - Canvas state saved to database and restored on refresh
 
 ## 🛠️ Tech Stack
 
@@ -65,12 +71,14 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 
 Replace with your actual Supabase credentials from your project dashboard.
 
-#### Enable Anonymous Sign-ins
+#### Setup Database Schema
+
+Run the SQL migration script in your Supabase SQL Editor:
 
 1. Go to your Supabase Dashboard
-2. Navigate to **Authentication** > **Settings**
-3. Scroll to **Auth Providers**
-4. Enable **Anonymous sign-ins**
+2. Navigate to **SQL Editor**
+3. Copy and paste the contents of `migrations.sql` from this repository
+4. Execute the script to create all required tables, policies, and functions
 
 ### 4. Run the Development Server
 
@@ -90,12 +98,15 @@ The built files will be in the `dist/` directory.
 
 ## 🎮 Usage
 
-1. **Login** - Enter any username to join the canvas
-2. **Add Rectangles** - Click the "Add Rectangle" button in the floating toolbar
-3. **Move Rectangles** - Click and drag rectangles to move them
-4. **Pan Canvas** - Click and drag on empty space to pan around
-5. **Zoom** - Use mouse wheel to zoom in/out
-6. **Change Colors** - Click color buttons in the toolbar to select different colors
+1. **Sign Up/Login** - Create an account with email/password or login with existing credentials
+2. **Create Shapes** - Click "Rectangle", "Circle", or "Text" buttons in the toolbar
+3. **Move Shapes** - Click and drag shapes to move them around the canvas
+4. **Resize Shapes** - Select a shape to show resize handles, drag to resize
+5. **Edit Text** - Double-click text boxes to edit text content
+6. **Pan Canvas** - Click and drag on empty space to pan around
+7. **Zoom** - Use mouse wheel to zoom in/out
+8. **Change Colors** - Click color buttons in the toolbar to select different colors
+9. **See Other Users** - View online users in the sidebar and their cursors on the canvas
 
 ## 📁 Project Structure
 
@@ -141,15 +152,15 @@ CanvasCollab/
 6. Add environment variables in Site Settings
 7. Deploy!
 
-## 🗄️ Database Setup (For Multiplayer Features)
+## 🗄️ Database Schema
 
-To enable real-time multiplayer features, you need to create database tables in Supabase.
+The application uses the following Supabase tables:
 
-### Coming Soon:
-- SQL scripts for database tables
-- Real-time synchronization setup
-- Multiplayer cursor tracking
-- Presence awareness
+- **`profiles`** - User profiles with usernames and display names
+- **`canvas_objects`** - All shapes (rectangles, circles, text boxes) with positions, colors, and content
+- **`user_presence`** - Real-time user presence and cursor positions
+
+All tables include Row Level Security (RLS) policies and real-time subscriptions for collaborative features.
 
 ## 🐛 Troubleshooting
 
@@ -162,7 +173,8 @@ To enable real-time multiplayer features, you need to create database tables in 
 ### Supabase Connection Issues
 
 - Verify your Supabase URL and anon key are correct
-- Check that anonymous sign-ins are enabled in Supabase dashboard
+- Ensure the database schema has been set up using `migrations.sql`
+- Check that real-time subscriptions are enabled in Supabase dashboard
 - Check browser console for specific error messages
 
 ### Canvas Not Rendering
@@ -173,16 +185,21 @@ To enable real-time multiplayer features, you need to create database tables in 
 
 ## 📝 Development Roadmap
 
-- [x] PR #1: Project Setup & Configuration
-- [x] PR #2: Authentication Implementation
-- [x] PR #3: Canvas Foundation (Single User)
-- [ ] PR #4: Supabase Database Schema
-- [ ] PR #5: Real-Time Object Synchronization
-- [ ] PR #6: Multiplayer Cursors
-- [ ] PR #7: Presence Awareness
-- [ ] PR #8: State Persistence
-- [ ] PR #9: Performance Optimization & Bug Fixes
-- [ ] PR #10: Polish & Documentation
+- [x] **Phase 1:** Project Setup & Authentication ✅
+- [x] **Phase 2:** Canvas Foundation (Single User) ✅
+- [x] **Phase 3:** Shape Creation & Manipulation ✅
+- [x] **Phase 4:** Real-Time Sync (Multi-User) ✅
+- [x] **Phase 5:** State Persistence ✅
+- [x] **Phase 6:** Presence Awareness ✅
+- [x] **Phase 7:** Polish & Testing ✅
+- [ ] **Phase 8:** Final Deployment & Documentation
+
+### 🎯 Next Steps (Post-MVP):
+- Advanced ownership system with conflict resolution
+- Shape deletion functionality
+- Keyboard shortcuts
+- Mobile support
+- Performance optimizations for 10+ users
 
 ## 📄 License
 

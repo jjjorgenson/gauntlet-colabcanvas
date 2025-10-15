@@ -25,7 +25,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
       }
 
       if (data && data.length > 0) {
-        console.log('Loaded existing shapes:', data.length)
+        // console.log('Loaded existing shapes:', data.length)
         setShapesFromRemote(data)
       }
     } catch (error) {
@@ -76,7 +76,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
         }
       )
       .subscribe((status) => {
-        console.log('Realtime subscription status:', status)
+        // console.log('Realtime subscription status:', status)
         setIsConnected(status === 'SUBSCRIBED')
       })
 
@@ -95,7 +95,8 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
       return
     }
 
-    console.log('Remote shape change:', { eventType, payload })
+    // console.log('Remote shape change:', { eventType, payload })
+    // console.log('Shape type:', payload.new?.type, 'Shape ID:', payload.new?.id)
 
     // Apply remote changes directly to ObjectStore instead of replacing all shapes
     switch (eventType) {
@@ -109,10 +110,10 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
         if (payload.new) {
           // Don't update if the shape is currently being edited locally
           if (objectStore.isEditing(payload.new.id)) {
-            console.log('🚫 BLOCKED: Remote update for shape being edited:', payload.new.id, 'Type:', payload.new.type)
+            // console.log('🚫 BLOCKED: Remote update for shape being edited:', payload.new.id, 'Type:', payload.new.type)
             return
           }
-          console.log('✅ ALLOWED: Remote update for shape:', payload.new.id, 'Type:', payload.new.type)
+          // console.log('✅ ALLOWED: Remote update for shape:', payload.new.id, 'Type:', payload.new.type)
           // Update the existing shape in the store
           objectStore.update(payload.new.id, payload.new)
         }
@@ -121,7 +122,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
         if (payload.old) {
           // Don't delete if the shape is currently being edited locally
           if (objectStore.isEditing(payload.old.id)) {
-            console.log('Skipping remote delete for shape being edited:', payload.old.id)
+            // console.log('Skipping remote delete for shape being edited:', payload.old.id)
             return
           }
           // Remove the shape from the store
@@ -133,6 +134,8 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
 
   const broadcastShapeChange = useCallback(async (shape, operation) => {
     if (!userId) return
+
+    // console.log('Broadcasting shape change:', { operation, shapeType: shape.type, shapeId: shape.id })
 
     try {
       const shapeData = {
