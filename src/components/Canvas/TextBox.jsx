@@ -2,6 +2,7 @@ import { Text, Rect, Group } from 'react-konva'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { throttle } from '../../utils/syncHelpers'
 import { CANVAS_CONFIG } from '../../lib/constants'
+import objectStore from '../../lib/ObjectStore'
 
 export const TextBox = ({ 
   textBox, 
@@ -20,8 +21,11 @@ export const TextBox = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [localText, setLocalText] = useState('')
   const textRef = useRef(null)
   const inputRef = useRef(null)
+  const blurTimeoutRef = useRef(null)
+  const ownershipTimeoutRef = useRef(null)
 
   const handleDragStart = (e) => {
     setIsDragging(true)
@@ -142,19 +146,65 @@ export const TextBox = ({
 
   const handleDoubleClick = () => {
     if (isOwnedByOther) return // Cannot edit if owned by another user
+    // console.log('🎯 STARTING EDIT: TextBox', textBox.id)
+    setLocalText(textBox.text_content || '')
     setIsEditing(true)
+    
+    // Mark as editing in ObjectStore to prevent remote updates
+    objectStore.setEditing(textBox.id)
+    // console.log('🔒 LOCKED: TextBox', textBox.id, 'for editing')
+    
+    // Set up 35-second ownership timeout (for future conflict resolution)
+    ownershipTimeoutRef.current = setTimeout(() => {
+      // console.log('⏰ TIMEOUT: Textbox ownership timeout reached, auto-saving:', textBox.id)
+      if (inputRef.current) {
+        handleTextSave(inputRef.current.value)
+      }
+    }, 35000) // 35 seconds
   }
 
-  const handleTextSave = (newText) => {
+  const handleTextSave = useCallback((newText) => {
+    // console.log('💾 SAVING: TextBox', textBox.id, 'with text:', newText)
+    // console.log('💾 SAVING: inputRef.current:', inputRef.current)
+    // console.log('💾 SAVING: inputRef.current?.value:', inputRef.current?.value)
+    // Clear any pending timeouts
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current)
+      blurTimeoutRef.current = null
+    }
+    if (ownershipTimeoutRef.current) {
+      clearTimeout(ownershipTimeoutRef.current)
+      ownershipTimeoutRef.current = null
+    }
+    
+    // Mark as no longer editing in ObjectStore
+    objectStore.setNotEditing(textBox.id)
+    // console.log('🔓 UNLOCKED: TextBox', textBox.id)
+    
     if (onTextChange) {
       onTextChange(textBox.id, newText)
     }
     setIsEditing(false)
-  }
+    setLocalText('')
+  }, [textBox.id, onTextChange])
 
-  const handleTextCancel = () => {
+  const handleTextCancel = useCallback(() => {
+    // Clear any pending timeouts
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current)
+      blurTimeoutRef.current = null
+    }
+    if (ownershipTimeoutRef.current) {
+      clearTimeout(ownershipTimeoutRef.current)
+      ownershipTimeoutRef.current = null
+    }
+    
+    // Mark as no longer editing in ObjectStore
+    objectStore.setNotEditing(textBox.id)
+    
     setIsEditing(false)
-  }
+    setLocalText('')
+  }, [textBox.id])
 
   const handleClick = (e) => {
     e.cancelBubble = true
@@ -171,9 +221,23 @@ export const TextBox = ({
     }
   }, [onExitEditing, isEditing])
 
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current)
+      }
+      if (ownershipTimeoutRef.current) {
+        clearTimeout(ownershipTimeoutRef.current)
+      }
+    }
+  }, [])
+
   // Handle text editing with DOM input
   useEffect(() => {
+    // console.log('🔧 DOM INPUT useEffect running:', { isEditing, textBoxId: textBox.id })
     if (isEditing && textRef.current) {
+      // console.log('🔧 Creating new DOM input for:', textBox.id)
       const input = document.createElement('input')
       inputRef.current = input
       
@@ -182,7 +246,7 @@ export const TextBox = ({
       const stageBox = stage.container().getBoundingClientRect()
       const textBoxPos = textRef.current.getAbsolutePosition()
       
-      input.value = textBox.text_content || ''
+      input.value = localText || textBox.text_content || ''
       input.style.position = 'absolute'
       input.style.left = `${stageBox.left + textBoxPos.x}px`
       input.style.top = `${stageBox.top + textBoxPos.y}px`
@@ -205,31 +269,64 @@ export const TextBox = ({
       
       const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
+          // console.log('⌨️ ENTER PRESSED: saving with input.value:', input.value)
           handleTextSave(input.value)
         } else if (e.key === 'Escape') {
+          // console.log('⌨️ ESCAPE PRESSED: canceling')
           handleTextCancel()
         }
       }
       
+      const handleInput = (e) => {
+        // console.log('📝 TYPING: TextBox', textBox.id, 'new value:', e.target.value)
+        // Don't update localText - let the DOM input handle its own value
+        // We'll get the value from input.value when saving
+      }
+      
       const handleBlur = () => {
-        handleTextSave(input.value)
+        // console.log('👁️ BLUR EVENT: input.value:', input.value)
+        // Add a delay before saving to give user time to click back
+        blurTimeoutRef.current = setTimeout(() => {
+          // console.log('⏰ BLUR TIMEOUT: saving with input.value:', input.value)
+          handleTextSave(input.value)
+        }, 5000) // 5 second delay
+      }
+      
+      const handleFocus = () => {
+        // Clear the blur timeout if user focuses back
+        if (blurTimeoutRef.current) {
+          clearTimeout(blurTimeoutRef.current)
+          blurTimeoutRef.current = null
+        }
       }
       
       input.addEventListener('keydown', handleKeyDown)
+      input.addEventListener('input', handleInput)
       input.addEventListener('blur', handleBlur)
+      input.addEventListener('focus', handleFocus)
       
       return () => {
+        // console.log('🧹 DOM INPUT cleanup running for:', textBox.id)
         if (inputRef.current && document.body.contains(inputRef.current)) {
+          // console.log('🧹 Removing DOM input from body')
           input.removeEventListener('keydown', handleKeyDown)
+          input.removeEventListener('input', handleInput)
           input.removeEventListener('blur', handleBlur)
+          input.removeEventListener('focus', handleFocus)
           document.body.removeChild(inputRef.current)
           inputRef.current = null
         }
       }
     }
-  }, [isEditing, textBox, handleTextSave, handleTextCancel])
+  }, [isEditing, textBox.id])
+
 
   const displayText = textBox.text_content || 'Double-click to edit'
+  
+  // Debug: Log when displayText changes
+  // useEffect(() => {
+  //   console.log('🔄 DISPLAY TEXT CHANGED:', textBox.id, 'isEditing:', isEditing, 'displayText:', displayText)
+  // }, [displayText, isEditing, textBox.id])
 
   // Calculate opacity based on ownership (70% opacity for text boxes when owned by others)
   const opacity = isOwnedByOther ? 0.7 : 1.0
@@ -266,7 +363,7 @@ export const TextBox = ({
         shadowOffsetY={isDragging ? 5 : 2}
       />
       <Text
-        text={isEditing ? 'Editing...' : displayText}
+        text={displayText}
         fontSize={textBox.font_size || 16}
         fontFamily="Arial, sans-serif"
         fill={isOwnedByOther ? '#888888' : (isEditing ? '#2196F3' : '#000000')}

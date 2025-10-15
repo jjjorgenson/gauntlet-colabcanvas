@@ -107,12 +107,23 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
         break
       case 'UPDATE':
         if (payload.new) {
+          // Don't update if the shape is currently being edited locally
+          if (objectStore.isEditing(payload.new.id)) {
+            console.log('🚫 BLOCKED: Remote update for shape being edited:', payload.new.id, 'Type:', payload.new.type)
+            return
+          }
+          console.log('✅ ALLOWED: Remote update for shape:', payload.new.id, 'Type:', payload.new.type)
           // Update the existing shape in the store
           objectStore.update(payload.new.id, payload.new)
         }
         break
       case 'DELETE':
         if (payload.old) {
+          // Don't delete if the shape is currently being edited locally
+          if (objectStore.isEditing(payload.old.id)) {
+            console.log('Skipping remote delete for shape being edited:', payload.old.id)
+            return
+          }
           // Remove the shape from the store
           objectStore.remove(payload.old.id)
         }

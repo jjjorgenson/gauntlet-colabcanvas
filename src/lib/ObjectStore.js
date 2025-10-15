@@ -7,6 +7,7 @@ class ObjectStore {
     this.objects = new Map()
     this.listeners = new Set()
     this.selectedId = null
+    this.editingIds = new Set() // Track which shapes are being edited
     this._version = 0
     this._cachedArray = null
     this._arrayVersion = -1
@@ -189,6 +190,33 @@ class ObjectStore {
     }
     return this.objects.has(id)
   }
+
+  /**
+   * Mark an object as being edited
+   * @param {string} id - Object ID
+   */
+  setEditing(id) {
+    this.editingIds.add(id)
+    this.notify()
+  }
+
+  /**
+   * Mark an object as no longer being edited
+   * @param {string} id - Object ID
+   */
+  setNotEditing(id) {
+    this.editingIds.delete(id)
+    this.notify()
+  }
+
+  /**
+   * Check if an object is being edited
+   * @param {string} id - Object ID
+   * @returns {boolean} True if object is being edited
+   */
+  isEditing(id) {
+    return this.editingIds.has(id)
+  }
 }
 
 // Create singleton instance
@@ -209,6 +237,9 @@ const boundObjectStore = {
   has: objectStore.has.bind(objectStore),
   size: objectStore.size.bind(objectStore),
   getSelectedObject: objectStore.getSelectedObject.bind(objectStore),
+  setEditing: objectStore.setEditing.bind(objectStore),
+  setNotEditing: objectStore.setNotEditing.bind(objectStore),
+  isEditing: objectStore.isEditing.bind(objectStore),
 }
 
 export default boundObjectStore
