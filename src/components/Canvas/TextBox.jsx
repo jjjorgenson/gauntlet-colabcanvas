@@ -72,13 +72,7 @@ export const TextBox = ({
     })
   }
 
-  // Throttled transform handler for smooth resizing
-  const handleTransformThrottled = useCallback(
-    throttle((shapeId, transform) => {
-      onTransform?.(shapeId, transform)
-    }, 100),
-    [onTransform]
-  )
+  // No throttling - local updates only during transform
 
   const handleTransform = (e) => {
     const node = e.target
@@ -103,13 +97,16 @@ export const TextBox = ({
       text.height(newHeight)
     }
     
-    // Use throttled handler for smooth updates
-    handleTransformThrottled(textBox.id, {
+    // Update local ObjectStore immediately (no throttling for instant UI response)
+    objectStore.update(textBox.id, {
       x: node.x(), // Use current Group position
       y: node.y(), // Use current Group position
       width: newWidth,
       height: newHeight
     })
+    
+    // NO database broadcast during transform - only sync on transform end for performance
+    // This makes local resizing completely smooth and snappy
   }
 
   const handleTransformEnd = (e) => {

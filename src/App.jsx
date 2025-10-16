@@ -44,7 +44,7 @@ const AppContent = () => {
       
       <div className="app-main">
         <div className="canvas-wrapper">
-          <Canvas user={user} />
+          <Canvas user={user} onlineUsers={onlineUsers} />
         </div>
         
         <div className="sidebar">

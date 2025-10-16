@@ -16,7 +16,7 @@
 - ✅ Online users list
 - ✅ TextBox editing with ownership locks
 - ✅ Canvas state persistence
-- 🎯 **Next: Shape deletion feature (high priority)**
+- 🎯 Next: Polish, testing, and final deployment
 
 ### **✅ What's Currently Working:**
 - **Project Structure:** Complete React + Vite project with all dependencies
@@ -554,14 +554,7 @@ collabcanvas/
   - `src/components/ErrorBoundary.jsx` (new)
   - `src/components/LoadingSpinner.jsx` (new)
 
-### ☐ Task 7.3: Shape Delete Feature - HIGH PRIORITY
-- [ ] Add delete key handler (Delete key)
-- [ ] Delete selected shape from local state
-- [ ] Broadcast DELETE to database
-- [ ] Test: Delete shape → disappears for all users
-- [ ] Add visual feedback for deletion
-
-### ☐ Task 7.4: Ownership System + Performance Optimization
+### ☐ Task 7.3: Ownership System + Performance Optimization
 **Database Changes:** (Consolidated into Task 2.2)
 - [x] All database schema changes moved to Task 2.2
 
@@ -601,6 +594,12 @@ collabcanvas/
 - [ ] Test: User A clicks new shape → loses ownership of previous shape
 - [ ] Test: User A clicks owned shape → refreshes 45-second timeout
 - [ ] Test: Performance remains smooth with ownership system active
+
+### ☐ Task 7.4: Shape Delete Feature (Optional)
+- [ ] Add delete key handler
+- [ ] Delete selected shape from local state
+- [ ] Broadcast DELETE to database
+- [ ] Test: Delete shape → disappears for all users ⚠️
 
 ### ☐ Task 7.5: UI/UX Improvements
 - [ ] Add keyboard shortcuts (Esc to deselect, etc.)
@@ -751,11 +750,11 @@ Before marking any PR as complete, verify:
 - ✅ Clean, polished UI
 
 ### Nice to Have:
-- Advanced keyboard shortcuts
+- Shape deletion
+- Keyboard shortcuts
 - Mobile support
 - Undo/redo
 - Export canvas
-- Multi-select operations
 
 ---
 

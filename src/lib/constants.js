@@ -35,6 +35,8 @@ export const REALTIME_CONFIG = {
   CURSOR_UPDATE_INTERVAL: 50, // ms
   PRESENCE_UPDATE_INTERVAL: 10000, // ms
   PRESENCE_TIMEOUT: 30000, // ms
+  DRAG_UPDATE_INTERVAL: 100, // ms - throttle drag position updates
+  TRANSFORM_UPDATE_INTERVAL: 100, // ms - throttle resize updates
 }
 
 // Database Table Names

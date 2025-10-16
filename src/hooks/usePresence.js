@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { TABLES, REALTIME_CONFIG } from '../lib/constants'
+import { throttle } from '../utils/syncHelpers'
 
 export const usePresence = ({ userId, username }) => {
   const [onlineUsers, setOnlineUsers] = useState([])
@@ -123,6 +124,14 @@ export const usePresence = ({ userId, username }) => {
     }
   }, [getUserColor])
 
+  // Throttled version of loadOnlineUsers to prevent spam
+  const throttledLoadOnlineUsers = useCallback(
+    throttle(() => {
+      loadOnlineUsers()
+    }, 1000), // Throttle to 1 second max
+    [loadOnlineUsers]
+  )
+
   // Mark user as offline
   const markOffline = useCallback(async () => {
     if (!userId) return
@@ -164,8 +173,8 @@ export const usePresence = ({ userId, username }) => {
         (payload) => {
           // console.log('Presence change:', payload)
           
-          // Reload online users when presence changes
-          loadOnlineUsers()
+          // Reload online users when presence changes (throttled to prevent spam)
+          throttledLoadOnlineUsers()
         }
       )
       .subscribe()
@@ -209,8 +218,8 @@ export const usePresence = ({ userId, username }) => {
         if (error) {
           console.error('Error cleaning up stale users:', error)
         } else {
-          // Reload users after cleanup
-          loadOnlineUsers()
+          // Reload users after cleanup (throttled)
+          throttledLoadOnlineUsers()
         }
       } catch (error) {
         console.error('Error in cleanup interval:', error)
@@ -218,7 +227,7 @@ export const usePresence = ({ userId, username }) => {
     }, 30000) // Run every 30 seconds
 
     return () => clearInterval(cleanupInterval)
-  }, [loadOnlineUsers])
+  }, [throttledLoadOnlineUsers])
 
   return {
     onlineUsers,

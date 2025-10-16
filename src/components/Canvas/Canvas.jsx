@@ -7,11 +7,12 @@ import { TextBox } from './TextBox'
 import { Cursor } from './Cursor'
 import { useCanvas } from '../../hooks/useCanvas'
 import { useCursors } from '../../hooks/useCursors'
-import { usePresence } from '../../hooks/usePresence'
 import { useRealtimeSync } from '../../hooks/useRealtimeSync'
-import { CANVAS_CONFIG } from '../../lib/constants'
+import { CANVAS_CONFIG, REALTIME_CONFIG } from '../../lib/constants'
+import { throttle } from '../../utils/syncHelpers'
+import objectStore from '../../lib/ObjectStore'
 
-export const Canvas = ({ user }) => {
+export const Canvas = ({ user, onlineUsers }) => {
   const stageRef = useRef(null)
   
   const {
@@ -38,12 +39,6 @@ export const Canvas = ({ user }) => {
     username: user?.user_metadata?.username || 'Anonymous' 
   })
 
-  const {
-    onlineUsers,
-  } = usePresence({ 
-    userId: user?.id, 
-    username: user?.user_metadata?.username || 'Anonymous' 
-  })
 
   const {
     broadcastShapeChange,
@@ -175,13 +170,12 @@ export const Canvas = ({ user }) => {
   }, [shapes, updateShapePosition, broadcastShapeChange])
 
   const handleShapeDragMoveBroadcast = useCallback((shapeId, newPosition) => {
-    // Broadcast position updates during drag for real-time sync
-    const updatedShape = shapes.find(s => s.id === shapeId)
-    if (updatedShape) {
-      const shapeWithNewPos = { ...updatedShape, ...newPosition }
-      broadcastShapeChange(shapeWithNewPos, 'update')
-    }
-  }, [shapes, broadcastShapeChange])
+    // Update local ObjectStore immediately (no throttling for instant UI response)
+    objectStore.update(shapeId, newPosition)
+    
+    // NO database broadcast during drag - only sync on drag end for performance
+    // This makes local editing completely smooth and snappy
+  }, [])
 
   const handleTextChange = useCallback((shapeId, newText) => {
     // Update ObjectStore
@@ -195,7 +189,7 @@ export const Canvas = ({ user }) => {
   }, [broadcastShapeChange, objectStore])
 
   const handleShapeTransform = useCallback((shapeId, transform) => {
-    // Update ObjectStore with new dimensions and position
+    // Update local ObjectStore immediately (no throttling for instant UI response)
     objectStore.update(shapeId, {
       x: transform.x,
       y: transform.y,
@@ -203,12 +197,25 @@ export const Canvas = ({ user }) => {
       height: transform.height
     })
     
-    // Broadcast to database (throttled updates will be handled by the shape component)
+    // NO database broadcast during transform - only sync on transform end for performance
+    // This makes local resizing completely smooth and snappy
+  }, [])
+
+  const handleShapeTransformEnd = useCallback((shapeId, transform) => {
+    // Update local ObjectStore with final position
+    objectStore.update(shapeId, {
+      x: transform.x,
+      y: transform.y,
+      width: transform.width,
+      height: transform.height
+    })
+    
+    // Broadcast final position to database (only on transform end)
     const updatedShape = objectStore.get(shapeId)
     if (updatedShape) {
       broadcastShapeChange(updatedShape, 'update')
     }
-  }, [broadcastShapeChange, objectStore])
+  }, [broadcastShapeChange])
 
   return (
     <div className="canvas-container">
@@ -286,7 +293,7 @@ export const Canvas = ({ user }) => {
                   onDragEnd={handleShapeDragEnd}
                   onDragMoveBroadcast={handleShapeDragMoveBroadcast}
                   onTransform={handleShapeTransform}
-                  onTransformEnd={handleShapeTransform}
+                  onTransformEnd={handleShapeTransformEnd}
                 />
               )
             case 'circle':
@@ -299,7 +306,7 @@ export const Canvas = ({ user }) => {
                   onDragEnd={handleShapeDragEnd}
                   onDragMoveBroadcast={handleShapeDragMoveBroadcast}
                   onTransform={handleShapeTransform}
-                  onTransformEnd={handleShapeTransform}
+                  onTransformEnd={handleShapeTransformEnd}
                 />
               )
             case 'text':
@@ -315,7 +322,7 @@ export const Canvas = ({ user }) => {
                   onDragMoveBroadcast={handleShapeDragMoveBroadcast}
                   onTextChange={handleTextChange}
                   onTransform={handleShapeTransform}
-                  onTransformEnd={handleShapeTransform}
+                  onTransformEnd={handleShapeTransformEnd}
                 />
               )
             default:
