@@ -1,7 +1,9 @@
 import { COLOR_PALETTE } from '../../lib/constants'
 
 export const Toolbar = ({ 
-  onAddRectangle, 
+  onAddRectangle,
+  onAddCircle,
+  onAddText,
   selectedColor, 
   onColorChange, 
   onLogout,
@@ -19,7 +21,19 @@ export const Toolbar = ({
           onClick={onAddRectangle}
           className="toolbar-button primary"
         >
-          + Add Rectangle
+          + Rectangle
+        </button>
+        <button 
+          onClick={onAddCircle}
+          className="toolbar-button primary"
+        >
+          + Circle
+        </button>
+        <button 
+          onClick={onAddText}
+          className="toolbar-button primary"
+        >
+          + Text
         </button>
       </div>
       

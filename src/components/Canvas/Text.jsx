@@ -1,8 +1,8 @@
-import { Rect, Transformer } from 'react-konva'
+import { Text as KonvaText, Transformer } from 'react-konva'
 import { useState, useRef, useEffect } from 'react'
 
-export const Rectangle = ({ 
-  rectangle, 
+export const Text = ({ 
+  text, 
   isSelected, 
   onSelect, 
   onDragEnd, 
@@ -12,32 +12,41 @@ export const Rectangle = ({
   onColorChange,
   onZIndexChange,
   currentUserId,
-  isOwned = false
+  isOwned = false,
+  onTextEditStart,
+  isEditing
 }) => {
   const [isDragging, setIsDragging] = useState(false)
-  const [isResizing, setIsResizing] = useState(false)
+  const textRef = useRef(null)
   const transformerRef = useRef(null)
 
   // Attach transformer when selected
   useEffect(() => {
-    if (isSelected && transformerRef.current) {
-      // Find the Rect node by its position and properties
-      const stage = transformerRef.current.getStage()
-      const rectNode = stage.findOne(node => 
-        node.getClassName() === 'Rect' && 
-        node.x() === rectangle.x && 
-        node.y() === rectangle.y
-      )
-      if (rectNode) {
-        transformerRef.current.nodes([rectNode])
-        transformerRef.current.getLayer().batchDraw()
-      }
+    if (isSelected && transformerRef.current && textRef.current) {
+      transformerRef.current.nodes([textRef.current])
+      transformerRef.current.getLayer().batchDraw()
     }
-  }, [isSelected, rectangle.x, rectangle.y])
+  }, [isSelected])
+
+  // Handle double-click to start editing
+  const handleDoubleClick = (e) => {
+    if (!canInteract) return
+    
+    e.cancelBubble = true
+    onTextEditStart?.(text)
+  }
+
+  // Handle clicking to select (not edit)
+  const handleClick = (e) => {
+    e.cancelBubble = true
+    onSelect?.(text.id)
+  }
 
   const handleDragStart = (e) => {
+    if (isEditing) return // Don't drag while editing
+    
     setIsDragging(true)
-    onDragStart?.(rectangle.id)
+    onDragStart?.(text.id)
   }
 
   const handleDragEnd = (e) => {
@@ -46,7 +55,7 @@ export const Rectangle = ({
       x: e.target.x(),
       y: e.target.y()
     }
-    onDragEnd?.(rectangle.id, newPos)
+    onDragEnd?.(text.id, newPos)
   }
 
   const handleTransformEnd = (e) => {
@@ -54,25 +63,25 @@ export const Rectangle = ({
     const newAttrs = {
       x: node.x(),
       y: node.y(),
-      width: Math.max(10, node.width() * node.scaleX()),
-      height: Math.max(10, node.height() * node.scaleY()),
+      width: Math.max(20, node.width() * node.scaleX()),
+      height: Math.max(20, node.height() * node.scaleY()),
       rotation: node.rotation()
     }
     
     // Update the shape with new attributes
     if (onResize) {
-      onResize(rectangle.id, {
+      onResize(text.id, {
         width: newAttrs.width,
         height: newAttrs.height
       })
     }
     
     if (onRotate) {
-      onRotate(rectangle.id, newAttrs.rotation)
+      onRotate(text.id, newAttrs.rotation)
     }
     
     if (onDragEnd) {
-      onDragEnd(rectangle.id, {
+      onDragEnd(text.id, {
         x: newAttrs.x,
         y: newAttrs.y
       })
@@ -84,78 +93,85 @@ export const Rectangle = ({
   }
 
   const handleTransformStart = () => {
-    setIsResizing(true)
+    // Don't allow transforms while editing
+    if (isEditing) return
   }
 
   const handleTransformEndComplete = () => {
-    setIsResizing(false)
+    // Transform end complete
   }
 
   // Determine if the shape can be interacted with
-  const canInteract = isOwned || rectangle.ownerId === currentUserId || !rectangle.ownerId
+  const canInteract = isOwned || text.ownerId === currentUserId || !text.ownerId
 
   // Visual indicators for ownership
   const getStrokeColor = () => {
     if (!canInteract) return '#9CA3AF' // Gray for locked
     if (isSelected) return '#1F2937' // Dark gray for selected
-    if (rectangle.ownerId && rectangle.ownerId !== currentUserId) return '#F59E0B' // Amber for owned by others
+    if (text.ownerId && text.ownerId !== currentUserId) return '#F59E0B' // Amber for owned by others
     return '#E5E7EB' // Light gray for default
   }
 
   const getStrokeWidth = () => {
     if (!canInteract) return 1
     if (isSelected) return 3
-    if (rectangle.ownerId && rectangle.ownerId !== currentUserId) return 2
+    if (text.ownerId && text.ownerId !== currentUserId) return 2
     return 1
   }
 
+  // Get the text content to display
+  const displayText = text.textContent || 'Double-click to edit'
+  
+  // Get the font size
+  const fontSize = text.fontSize || 16
+
   return (
     <>
-      <Rect
-        x={rectangle.x}
-        y={rectangle.y}
-        width={rectangle.width}
-        height={rectangle.height}
-        fill={rectangle.color}
+      <KonvaText
+        ref={textRef}
+        x={text.x}
+        y={text.y}
+        text={displayText}
+        fontSize={fontSize}
+        fill={text.color}
         stroke={getStrokeColor()}
         strokeWidth={getStrokeWidth()}
-        rotation={rectangle.rotation || 0}
-        draggable={canInteract}
+        rotation={text.rotation || 0}
+        draggable={canInteract && !isEditing}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
-        onClick={(e) => {
-          e.cancelBubble = true
-          onSelect?.(rectangle.id)
-        }}
+        onClick={handleClick}
+        onDblClick={handleDoubleClick}
         shadowColor="black"
-        shadowBlur={isDragging || isResizing ? 10 : 5}
-        shadowOpacity={isDragging || isResizing ? 0.3 : 0.2}
-        shadowOffsetX={isDragging || isResizing ? 5 : 2}
-        shadowOffsetY={isDragging || isResizing ? 5 : 2}
+        shadowBlur={isDragging ? 10 : 5}
+        shadowOpacity={isDragging ? 0.3 : 0.2}
+        shadowOffsetX={isDragging ? 5 : 2}
+        shadowOffsetY={isDragging ? 5 : 2}
         // Transform controls for resizing and rotation
-        {...(canInteract && isSelected && {
+        {...(canInteract && isSelected && !isEditing && {
           onTransformStart: handleTransformStart,
           onTransformEnd: handleTransformEnd,
           onTransformEndComplete: handleTransformEndComplete
         })}
         // Visual feedback for interaction state
         opacity={canInteract ? 1 : 0.6}
+        // Simple text display - no Konva editing
       />
       
       {/* Transformer for resize/rotate handles */}
-      {isSelected && canInteract && (
+      {isSelected && canInteract && !isEditing && (
         <Transformer
           ref={transformerRef}
           boundBoxFunc={(oldBox, newBox) => {
-            // Only limit minimum size, allow free proportions
-            if (newBox.width < 10 || newBox.height < 10) {
+            // Limit resize
+            if (newBox.width < 20 || newBox.height < 20) {
               return oldBox
             }
             return newBox
           }}
         />
       )}
+      
     </>
   )
 }
-

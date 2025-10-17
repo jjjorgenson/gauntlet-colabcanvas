@@ -146,5 +146,7 @@ export const shapeToDB = (jsShape) => ({
   owner_id: jsShape.ownerId,
   ownership_timestamp: jsShape.ownershipTimestamp,
   created_by: jsShape.createdBy,
+  created_at: jsShape.createdAt,
+  updated_at: jsShape.updatedAt,
 })
 

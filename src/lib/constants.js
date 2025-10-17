@@ -29,7 +29,7 @@ export const COLOR_PALETTE = [
 
 // Realtime Configuration
 export const REALTIME_CONFIG = {
-  CURSOR_UPDATE_INTERVAL: 50, // ms
+  CURSOR_UPDATE_INTERVAL: 500, // ms - further reduced frequency
   PRESENCE_UPDATE_INTERVAL: 10000, // ms
   PRESENCE_TIMEOUT: 30000, // ms
 }

@@ -8,6 +8,7 @@ import './App.css'
 
 const AppContent = () => {
   const { user, loading, logout, username } = useAuth()
+  const [shapeHandlers, setShapeHandlers] = useState(null)
 
   if (loading) {
     return (
@@ -26,9 +27,11 @@ const AppContent = () => {
     <div className="app">
       <div className="app-header">
         <Toolbar 
-          onAddRectangle={() => {}} // Will be handled by Canvas
-          selectedColor="#3B82F6"
-          onColorChange={() => {}}
+          onAddRectangle={shapeHandlers?.addRectangle || (() => {})}
+          onAddCircle={shapeHandlers?.addCircle || (() => {})}
+          onAddText={shapeHandlers?.addText || (() => {})}
+          selectedColor={shapeHandlers?.selectedColor || "#3B82F6"}
+          onColorChange={shapeHandlers?.onColorChange || (() => {})}
           onLogout={logout}
           username={username}
         />
@@ -36,7 +39,7 @@ const AppContent = () => {
       
       <div className="app-main">
         <div className="canvas-wrapper">
-          <Canvas user={user} />
+          <Canvas user={user} onShapeCreate={setShapeHandlers} />
         </div>
         
         <div className="sidebar">
