@@ -36,7 +36,8 @@ export const REALTIME_CONFIG = {
 
 // Database Table Names
 export const TABLES = {
-  CANVAS_OBJECTS: 'canvas_objects',
-  USER_PRESENCE: 'user_presence',
+  SHAPES: 'shapes',
+  PRESENCE: 'presence',
+  PROFILES: 'profiles',
 }
 

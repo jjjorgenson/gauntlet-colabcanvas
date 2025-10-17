@@ -7,18 +7,18 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
   const subscriptionRef = useRef(null)
 
   useEffect(() => {
-    // Subscribe to canvas objects changes
+    // Subscribe to shapes changes
     const subscription = supabase
-      .channel('canvas_objects')
+      .channel('shapes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: TABLES.CANVAS_OBJECTS,
+          table: TABLES.SHAPES,
         },
         (payload) => {
-          console.log('Canvas object change:', payload)
+          console.log('Shape change:', payload)
           // For now, just log the changes
           // TODO: Implement proper sync logic
         }

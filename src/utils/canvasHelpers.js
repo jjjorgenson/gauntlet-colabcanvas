@@ -6,18 +6,25 @@ import { v4 as uuidv4 } from 'uuid'
 export const generateId = () => uuidv4()
 
 /**
- * Create a new rectangle object
+ * Create a new rectangle object with all required schema fields
  */
-export const createRectangle = (x, y, color = '#3B82F6') => ({
+export const createRectangle = (x, y, color = '#3B82F6', createdBy = null) => ({
   id: generateId(),
   type: 'rectangle',
   x,
   y,
   width: 100,
   height: 100,
+  rotation: 0,
   color,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
+  zIndex: 0,
+  textContent: null,
+  fontSize: 16,
+  ownerId: null,
+  ownershipTimestamp: null,
+  createdBy,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 })
 
 /**
@@ -27,7 +34,44 @@ export const updateRectanglePosition = (rectangle, newX, newY) => ({
   ...rectangle,
   x: newX,
   y: newY,
-  updated_at: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+})
+
+/**
+ * Update rectangle size
+ */
+export const updateRectangleSize = (rectangle, newWidth, newHeight) => ({
+  ...rectangle,
+  width: newWidth,
+  height: newHeight,
+  updatedAt: new Date().toISOString(),
+})
+
+/**
+ * Update rectangle rotation
+ */
+export const updateRectangleRotation = (rectangle, newRotation) => ({
+  ...rectangle,
+  rotation: newRotation,
+  updatedAt: new Date().toISOString(),
+})
+
+/**
+ * Update rectangle color
+ */
+export const updateRectangleColor = (rectangle, newColor) => ({
+  ...rectangle,
+  color: newColor,
+  updatedAt: new Date().toISOString(),
+})
+
+/**
+ * Update rectangle z-index
+ */
+export const updateRectangleZIndex = (rectangle, newZIndex) => ({
+  ...rectangle,
+  zIndex: newZIndex,
+  updatedAt: new Date().toISOString(),
 })
 
 /**
@@ -61,4 +105,46 @@ export const canvasToStage = (canvasPos, stageScale, stagePosition) => {
     y: canvasPos.y * stageScale.y + stagePosition.y,
   }
 }
+
+/**
+ * Convert database shape record to JavaScript object
+ */
+export const shapeFromDB = (dbShape) => ({
+  id: dbShape.id,
+  type: dbShape.type,
+  x: dbShape.x,
+  y: dbShape.y,
+  width: dbShape.width,
+  height: dbShape.height,
+  rotation: dbShape.rotation,
+  color: dbShape.color,
+  zIndex: dbShape.z_index,
+  textContent: dbShape.text_content,
+  fontSize: dbShape.font_size,
+  ownerId: dbShape.owner_id,
+  ownershipTimestamp: dbShape.ownership_timestamp,
+  createdBy: dbShape.created_by,
+  createdAt: dbShape.created_at,
+  updatedAt: dbShape.updated_at,
+})
+
+/**
+ * Convert JavaScript shape object to database record
+ */
+export const shapeToDB = (jsShape) => ({
+  id: jsShape.id,
+  type: jsShape.type,
+  x: jsShape.x,
+  y: jsShape.y,
+  width: jsShape.width,
+  height: jsShape.height,
+  rotation: jsShape.rotation,
+  color: jsShape.color,
+  z_index: jsShape.zIndex,
+  text_content: jsShape.textContent,
+  font_size: jsShape.fontSize,
+  owner_id: jsShape.ownerId,
+  ownership_timestamp: jsShape.ownershipTimestamp,
+  created_by: jsShape.createdBy,
+})
 

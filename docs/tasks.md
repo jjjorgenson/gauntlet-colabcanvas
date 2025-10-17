@@ -9,36 +9,36 @@ This manifest organizes all development tasks for building the collaborative can
 ### 1.1 Environment Setup
 - [ ] Create `.env.local` with Supabase keys (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
 - [ ] Create `.env.example` template for environment variables
-- [ ] Add `.env.local` to `.gitignore`
-- [ ] Install core dependencies: `react`, `react-dom`, `vite`
-- [ ] Install Konva: `konva`, `react-konva`
-- [ ] Install Supabase: `@supabase/supabase-js`
-- [ ] Configure Vite for environment variables
-- [ ] Set up ESLint and Prettier configurations
+- [x] Add `.env.local` to `.gitignore`
+- [x] Install core dependencies: `react`, `react-dom`, `vite`
+- [x] Install Konva: `konva`, `react-konva`
+- [x] Install Supabase: `@supabase/supabase-js`
+- [x] Configure Vite for environment variables
+- [x] Set up ESLint and Prettier configurations
 - [ ] Create `jsconfig.json` for path aliases (`@/` -> `src/`)
 
 ### 1.2 Project Structure
-- [ ] Create directory structure as outlined in PRD
-- [ ] Create `src/components/` with subdirectories (auth, canvas, shapes, toolbar, sidebar, ai, layout)
-- [ ] Create `src/hooks/` directory
+- [x] Create directory structure as outlined in PRD
+- [x] Create `src/components/` with subdirectories (auth, canvas, shapes, toolbar, sidebar, ai, layout)
+- [x] Create `src/hooks/` directory
 - [ ] Create `src/context/` directory
-- [ ] Create `src/utils/` directory
+- [x] Create `src/utils/` directory
 - [ ] Create `src/config/` directory
-- [ ] Create placeholder `index.jsx` files in each component subdirectory
+- [x] Create placeholder `index.jsx` files in each component subdirectory
 
 ---
 
-## **PHASE 2: Supabase Backend Configuration**
+## **PHASE 2: Supabase Backend Configuration** ✅ COMPLETE
 
 ### 2.1 Database Tables
-- [ ] Create `users` table with schema:
+- [x] Create `users` table with schema:
   - `id` (uuid, primary key, references auth.users)
   - `email` (string, unique, not null)
   - `display_name` (string)
   - `custom_colors` (jsonb, default [])
   - `theme` (string, default 'light')
   - `created_at`, `updated_at` (timestamps)
-- [ ] Create `shapes` table with schema:
+- [x] Create `shapes` table with schema:
   - `id` (uuid, primary key)
   - `type` (string, not null)
   - `x`, `y`, `width`, `height`, `rotation` (numeric)
@@ -50,7 +50,7 @@ This manifest organizes all development tasks for building the collaborative can
   - `ownership_timestamp` (timestamp, nullable)
   - `created_by` (uuid, foreign key to users)
   - `created_at`, `updated_at` (timestamps)
-- [ ] Create `presence` table with schema:
+- [x] Create `presence` table with schema:
   - `user_id` (uuid, primary key, foreign key to users)
   - `cursor_x`, `cursor_y` (numeric, default 0)
   - `cursor_color` (string, default '#3b82f6')
@@ -59,40 +59,40 @@ This manifest organizes all development tasks for building the collaborative can
   - `display_name` (string)
 
 ### 2.2 Database Indexes
-- [ ] Add index on `shapes.owner_id`
-- [ ] Add index on `shapes.z_index`
-- [ ] Add index on `shapes.created_at`
-- [ ] Add index on `presence.active`
-- [ ] Add index on `presence.last_seen`
+- [x] Add index on `shapes.owner_id`
+- [x] Add index on `shapes.z_index`
+- [x] Add index on `shapes.created_at`
+- [x] Add index on `presence.active`
+- [x] Add index on `presence.last_seen`
 
 ### 2.3 Row Level Security (RLS)
-- [ ] Enable RLS on `users` table
+- [x] Enable RLS on `users` table
   - Policy: Users can read own record
   - Policy: Users can update own record
-- [ ] Enable RLS on `shapes` table
+- [x] Enable RLS on `shapes` table
   - Policy: All authenticated users can read all shapes
   - Policy: Authenticated users can insert shapes
   - Policy: Users can update shapes they own or unowned shapes
   - Policy: Users can delete shapes they created
-- [ ] Enable RLS on `presence` table
+- [x] Enable RLS on `presence` table
   - Policy: All authenticated users can read all presence records
   - Policy: Users can upsert their own presence record
 
 ### 2.4 Database Triggers
-- [ ] Create trigger for `users.updated_at` on update
-- [ ] Create trigger for `shapes.updated_at` on update
-- [ ] Create trigger to auto-release shape ownership after 15 seconds:
+- [x] Create trigger for `users.updated_at` on update
+- [x] Create trigger for `shapes.updated_at` on update
+- [x] Create trigger to auto-release shape ownership after 15 seconds:
   - Trigger function checks `ownership_timestamp`
   - Sets `owner_id` to NULL if > 15 seconds
   - Runs periodically via pg_cron or on shape access
-- [ ] Create trigger to cleanup stale `presence` records:
+- [x] Create trigger to cleanup stale `presence` records:
   - Mark users inactive if `last_seen` > 30 seconds
   - Runs every 30 seconds
 
 ### 2.5 Realtime Configuration
-- [ ] Enable Realtime for `shapes` table
-- [ ] Enable Realtime for `presence` table
-- [ ] Configure Realtime broadcast channels:
+- [x] Enable Realtime for `shapes` table
+- [x] Enable Realtime for `presence` table
+- [x] Configure Realtime broadcast channels:
   - `shapes:updates`
   - `cursors:updates`
   - `presence:updates`

@@ -22,6 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.cursor/rules/*
+memory-bank/*
+tasks/*
 
 # Environment variables
 .env
