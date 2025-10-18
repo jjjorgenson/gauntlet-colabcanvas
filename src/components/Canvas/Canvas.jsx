@@ -77,6 +77,11 @@ export const Canvas = ({ user, onlineUsers }) => {
         // Clear timeout
         ownershipManager.release(shapeId)
 
+        // Update ObjectStore with ownership release
+        const ownershipReleaseData = { owner_id: null, ownership_timestamp: null }
+        objectStore.update(shapeId, ownershipReleaseData)
+        console.log('🔄 Ownership released manually:', { shapeId, userId: user.id })
+
         // Update local state
         setOwnedShapes(prev => {
           const newSet = new Set(prev)
@@ -87,7 +92,7 @@ export const Canvas = ({ user, onlineUsers }) => {
         // Broadcast ownership release
         const updatedShape = objectStore.get(shapeId)
         if (updatedShape) {
-          broadcastShapeChange({ ...updatedShape, owner_id: null, ownership_timestamp: null }, 'update')
+          broadcastShapeChange({ ...updatedShape, ...ownershipReleaseData }, 'update')
         }
       } catch (error) {
         console.error('Error releasing ownership for shape:', shapeId, error)
@@ -109,6 +114,11 @@ export const Canvas = ({ user, onlineUsers }) => {
         return
       }
 
+      // Update ObjectStore with ownership release
+      const ownershipReleaseData = { owner_id: null, ownership_timestamp: null }
+      objectStore.update(shapeId, ownershipReleaseData)
+      console.log('⏰ Ownership released by timeout:', { shapeId, timestamp: new Date().toISOString() })
+
       // Update local state
       setOwnedShapes(prev => {
         const newSet = new Set(prev)
@@ -119,7 +129,7 @@ export const Canvas = ({ user, onlineUsers }) => {
       // Broadcast ownership release
       const updatedShape = objectStore.get(shapeId)
       if (updatedShape) {
-        broadcastShapeChange({ ...updatedShape, owner_id: null, ownership_timestamp: null }, 'update')
+        broadcastShapeChange({ ...updatedShape, ...ownershipReleaseData }, 'update')
       }
     } catch (error) {
       console.error('Error in handleOwnershipTimeout:', error)
@@ -150,6 +160,14 @@ export const Canvas = ({ user, onlineUsers }) => {
         // Successfully acquired ownership
         setOwnedShapes(prev => new Set(prev).add(shapeId))
         
+        // Update ObjectStore with ownership data
+        const ownershipData = { 
+          owner_id: user.id, 
+          ownership_timestamp: new Date().toISOString() 
+        }
+        objectStore.update(shapeId, ownershipData)
+        console.log('✅ Ownership acquired:', { shapeId, userId: user.id, timestamp: ownershipData.ownership_timestamp })
+        
         // Start 15-second timeout
         ownershipManager.acquire(shapeId, user.id, (timeoutShapeId) => {
           handleOwnershipTimeout(timeoutShapeId)
@@ -158,7 +176,7 @@ export const Canvas = ({ user, onlineUsers }) => {
         // Broadcast ownership change
         const updatedShape = objectStore.get(shapeId)
         if (updatedShape) {
-          broadcastShapeChange({ ...updatedShape, owner_id: user.id, ownership_timestamp: new Date().toISOString() }, 'update')
+          broadcastShapeChange({ ...updatedShape, ...ownershipData }, 'update')
         }
         
         return true
@@ -300,6 +318,9 @@ export const Canvas = ({ user, onlineUsers }) => {
     const shape = objectStore.get(shapeId)
     if (!shape) return
 
+    // Always release current ownership first (single ownership model)
+    await releaseCurrentOwnership()
+
     // If shape is unowned, try to acquire ownership
     if (!shape.owner_id) {
       const ownershipAcquired = await acquireOwnership(shapeId)
@@ -315,7 +336,7 @@ export const Canvas = ({ user, onlineUsers }) => {
     else {
       console.log('Shape is owned by another user, cannot select')
     }
-  }, [selectShape, acquireOwnership, user?.id])
+  }, [selectShape, acquireOwnership, releaseCurrentOwnership, user?.id])
 
   const handleShapeDragEnd = useCallback((shapeId, newPosition) => {
     setIsDragging(false) // End drag state
