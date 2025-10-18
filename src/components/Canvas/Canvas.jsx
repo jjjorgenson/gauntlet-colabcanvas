@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect, useState } from 'react'
 import Konva from 'konva'
+import { Transformer } from 'react-konva'
 import { CanvasStage } from './CanvasStage'
 import { Rectangle } from './Rectangle'
 import { Circle } from './Circle'
@@ -16,6 +17,7 @@ import { supabase } from '../../lib/supabase'
 
 export const Canvas = ({ user, onlineUsers }) => {
   const stageRef = useRef(null)
+  const transformerRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
   const [ownedShapes, setOwnedShapes] = useState(new Set()) // Track shapes owned by current user
   
@@ -141,6 +143,8 @@ export const Canvas = ({ user, onlineUsers }) => {
     if (!user?.id) return false
 
     try {
+      console.log('🔐 Attempting to acquire ownership for shape:', shapeId)
+      
       // Single transaction: check ownership + acquire if unowned
       const { data, error } = await supabase
         .from(TABLES.SHAPES)
@@ -150,14 +154,18 @@ export const Canvas = ({ user, onlineUsers }) => {
         })
         .eq('id', shapeId)
         .is('owner_id', null) // Only if unowned
+        .select() // Return the updated row
         
       if (error) {
-        console.error('Error acquiring ownership:', error)
+        console.error('❌ Error acquiring ownership:', error)
         return false
       }
 
+      console.log('📊 Ownership acquisition result:', { data, error })
+
       if (data && data.length > 0) {
         // Successfully acquired ownership
+        console.log('✅ Ownership acquired successfully!')
         setOwnedShapes(prev => new Set(prev).add(shapeId))
         
         // Update ObjectStore with ownership data
@@ -180,11 +188,12 @@ export const Canvas = ({ user, onlineUsers }) => {
         }
         
         return true
+      } else {
+        console.log('❌ Failed to acquire ownership - shape may already be owned')
+        return false // Shape already owned
       }
-      
-      return false // Shape already owned
     } catch (error) {
-      console.error('Error in acquireOwnership:', error)
+      console.error('❌ Error in acquireOwnership:', error)
       return false
     }
   }, [user?.id, broadcastShapeChange, handleOwnershipTimeout])
@@ -314,27 +323,44 @@ export const Canvas = ({ user, onlineUsers }) => {
   }, [shapes, updateShapePosition, broadcastShapeChange])
 
   const handleShapeSelect = useCallback(async (shapeId) => {
+    console.log('🎯 handleShapeSelect called for shape:', shapeId)
+    
     // Get the shape to check current ownership
     const shape = objectStore.get(shapeId)
-    if (!shape) return
+    if (!shape) {
+      console.log('❌ Shape not found in ObjectStore:', shapeId)
+      return
+    }
+
+    console.log('📋 Shape details:', { 
+      id: shape.id, 
+      type: shape.type, 
+      owner_id: shape.owner_id, 
+      current_user: user?.id 
+    })
 
     // Always release current ownership first (single ownership model)
     await releaseCurrentOwnership()
 
     // If shape is unowned, try to acquire ownership
     if (!shape.owner_id) {
+      console.log('🔓 Shape is unowned, attempting to acquire ownership...')
       const ownershipAcquired = await acquireOwnership(shapeId)
       if (ownershipAcquired) {
+        console.log('✅ Ownership acquired, selecting shape')
         selectShape(shapeId)
+      } else {
+        console.log('❌ Failed to acquire ownership')
       }
     } 
     // If shape is owned by current user, just select it
     else if (shape.owner_id === user?.id) {
+      console.log('👤 Shape owned by current user, selecting')
       selectShape(shapeId)
     }
     // If shape is owned by another user, don't select (no transform handles)
     else {
-      console.log('Shape is owned by another user, cannot select')
+      console.log('🚫 Shape is owned by another user, cannot select')
     }
   }, [selectShape, acquireOwnership, releaseCurrentOwnership, user?.id])
 
@@ -395,6 +421,77 @@ export const Canvas = ({ user, onlineUsers }) => {
       setSelectedColor(color)
     }
   }, [selectedShapeId, changeShapeColor, setSelectedColor])
+
+  // Attach transformer to selected shape
+  useEffect(() => {
+    if (selectedShapeId && transformerRef.current) {
+      const stage = stageRef.current
+      if (stage) {
+        const selectedNode = stage.findOne(`#${selectedShapeId}`)
+        if (selectedNode) {
+          transformerRef.current.nodes([selectedNode])
+          transformerRef.current.getLayer().batchDraw()
+        }
+      }
+    }
+  }, [selectedShapeId])
+
+  // Periodic cleanup of expired ownership (every 15 seconds)
+  useEffect(() => {
+    const cleanupInterval = setInterval(async () => {
+      if (!user?.id) return
+
+      try {
+        // Call the manual cleanup function to clean up expired ownership
+        const { data, error } = await supabase
+          .rpc('manual_cleanup_ownership')
+
+        if (error) {
+          // If function doesn't exist yet, just log and continue
+          if (error.code === 'PGRST202') {
+            console.log('📝 Database cleanup function not yet installed - run ownership-cleanup-function.sql')
+            return
+          }
+          console.error('Error during periodic ownership cleanup:', error)
+          return
+        }
+
+        if (data && data.length > 0) {
+          const { cleaned_count, remaining_owned } = data[0]
+          if (cleaned_count > 0) {
+            console.log(`🧹 Periodic cleanup: Released ${cleaned_count} expired ownerships, ${remaining_owned} still owned`)
+            
+            // Update local state to reflect the cleanup
+            setOwnedShapes(prev => {
+              const newSet = new Set()
+              // Keep only shapes that are still owned by current user
+              for (const shapeId of prev) {
+                const shape = objectStore.get(shapeId)
+                if (shape && shape.owner_id === user.id) {
+                  newSet.add(shapeId)
+                }
+              }
+              return newSet
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error in periodic ownership cleanup:', error)
+      }
+    }, 15000) // Run every 15 seconds
+
+    return () => clearInterval(cleanupInterval)
+  }, [user?.id])
+
+  // Cleanup on component unmount (logout)
+  useEffect(() => {
+    return () => {
+      // Release all owned shapes when component unmounts
+      if (user?.id && ownedShapes.size > 0) {
+        releaseCurrentOwnership()
+      }
+    }
+  }, [user?.id, ownedShapes.size, releaseCurrentOwnership])
 
 
 
@@ -566,6 +663,28 @@ export const Canvas = ({ user, onlineUsers }) => {
               return null
           }
         })}
+        
+        {/* Transformer for selected shapes */}
+        {selectedShapeId && (
+          <Transformer
+            ref={transformerRef}
+            boundBoxFunc={(oldBox, newBox) => {
+              // Limit resize
+              if (newBox.width < 20 || newBox.height < 20) {
+                return oldBox
+              }
+              return newBox
+            }}
+            keepRatio={false}
+            enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+            rotateEnabled={true}
+            borderEnabled={false}
+            anchorFill="#1F2937"
+            anchorStroke="#1F2937"
+            anchorSize={8}
+            rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+          />
+        )}
         
         {/* Render other users' cursors */}
         {otherCursors.map((cursor) => (
