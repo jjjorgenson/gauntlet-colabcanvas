@@ -26,6 +26,7 @@ export const usePresence = ({ userId, username }) => {
           .from('profiles')
           .insert({
             id: userId,
+            email: username, // username is actually the email from auth
             username: username,
             display_name: username
           })
@@ -50,11 +51,12 @@ export const usePresence = ({ userId, username }) => {
       await ensureProfileExists()
 
       const { error } = await supabase
-        .from(TABLES.USER_PRESENCE)
+        .from(TABLES.PRESENCE)
         .upsert({
           user_id: userId,
-          is_online: true,
-          last_seen: new Date().toISOString()
+          active: true,
+          last_seen: new Date().toISOString(),
+          display_name: username
         }, {
           onConflict: 'user_id'
         })
@@ -95,15 +97,16 @@ export const usePresence = ({ userId, username }) => {
   const loadOnlineUsers = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from(TABLES.USER_PRESENCE)
+        .from(TABLES.PRESENCE)
         .select(`
           *,
           profiles:user_id (
+            email,
             username,
             display_name
           )
         `)
-        .eq('is_online', true)
+        .eq('active', true)
         .order('last_seen', { ascending: false })
 
       if (error) {
@@ -114,7 +117,7 @@ export const usePresence = ({ userId, username }) => {
       // Add colors and format the data
       const usersWithColors = (data || []).map(user => ({
         ...user,
-        username: user.profiles?.username || user.profiles?.display_name || 'Anonymous',
+        username: user.profiles?.username || user.profiles?.display_name || user.profiles?.email || 'Anonymous',
         color: getUserColor(user.user_id)
       }))
 
@@ -138,9 +141,9 @@ export const usePresence = ({ userId, username }) => {
 
     try {
       const { error } = await supabase
-        .from(TABLES.USER_PRESENCE)
+        .from(TABLES.PRESENCE)
         .update({
-          is_online: false,
+          active: false,
           last_seen: new Date().toISOString()
         })
         .eq('user_id', userId)
@@ -162,13 +165,13 @@ export const usePresence = ({ userId, username }) => {
 
     // Subscribe to presence changes
     const subscription = supabase
-      .channel('user_presence')
+      .channel('presence')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: TABLES.USER_PRESENCE,
+          table: TABLES.PRESENCE,
         },
         (payload) => {
           // console.log('Presence change:', payload)
@@ -210,10 +213,10 @@ export const usePresence = ({ userId, username }) => {
         const staleTime = new Date(Date.now() - REALTIME_CONFIG.PRESENCE_TIMEOUT)
         
         const { error } = await supabase
-          .from(TABLES.USER_PRESENCE)
-          .update({ is_online: false })
+          .from(TABLES.PRESENCE)
+          .update({ active: false })
           .lt('last_seen', staleTime.toISOString())
-          .eq('is_online', true)
+          .eq('active', true)
 
         if (error) {
           console.error('Error cleaning up stale users:', error)

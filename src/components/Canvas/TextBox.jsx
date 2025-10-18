@@ -17,7 +17,8 @@ export const TextBox = ({
   onTextChange,
   onTransform,
   onTransformEnd,
-  onExitEditing
+  onExitEditing,
+  onCursorUpdate
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -37,6 +38,9 @@ export const TextBox = ({
       const stage = e.target.getStage()
       const pointer = stage.getPointerPosition()
       if (pointer) {
+        // Update cursor position during drag for real-time collaboration
+        onCursorUpdate?.(pointer.x, pointer.y)
+        
         onDragMove?.(pointer.x, pointer.y)
         
         // Broadcast position update during drag

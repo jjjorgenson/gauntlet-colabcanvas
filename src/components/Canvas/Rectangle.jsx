@@ -11,7 +11,8 @@ export const Rectangle = ({
   onDragMove,
   onDragMoveBroadcast,
   onTransform,
-  onTransformEnd
+  onTransformEnd,
+  onCursorUpdate
 }) => {
   const [isDragging, setIsDragging] = useState(false)
 
@@ -25,6 +26,9 @@ export const Rectangle = ({
       const stage = e.target.getStage()
       const pointer = stage.getPointerPosition()
       if (pointer) {
+        // Update cursor position during drag for real-time collaboration
+        onCursorUpdate?.(pointer.x, pointer.y)
+        
         onDragMove?.(pointer.x, pointer.y)
         
         // Broadcast position update during drag

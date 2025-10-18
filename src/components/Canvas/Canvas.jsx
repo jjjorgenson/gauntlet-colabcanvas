@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react'
+import { useRef, useCallback, useEffect, useState } from 'react'
 import Konva from 'konva'
 import { CanvasStage } from './CanvasStage'
 import { Rectangle } from './Rectangle'
@@ -14,6 +14,7 @@ import objectStore from '../../lib/ObjectStore'
 
 export const Canvas = ({ user, onlineUsers }) => {
   const stageRef = useRef(null)
+  const [isDragging, setIsDragging] = useState(false)
   
   const {
     shapes,
@@ -36,7 +37,8 @@ export const Canvas = ({ user, onlineUsers }) => {
     updateCursorPosition,
   } = useCursors({ 
     userId: user?.id, 
-    username: user?.user_metadata?.username || 'Anonymous' 
+    username: user?.user_metadata?.username || 'Anonymous',
+    isDragging // Pass drag state to cursor hook
   })
 
 
@@ -105,10 +107,27 @@ export const Canvas = ({ user, onlineUsers }) => {
     if (stage) {
       const pointer = stage.getPointerPosition()
       if (pointer) {
+        // Debug: Log mouse move events
+        if (isDragging) {
+          console.log('Mouse move during drag (Stage level):', { x: pointer.x, y: pointer.y })
+        }
         updateCursorPosition(pointer.x, pointer.y)
       }
     }
-  }, [updateCursorPosition])
+  }, [updateCursorPosition, isDragging])
+
+  // Drag state handlers for cursor coordination
+  const handleDragStart = useCallback((shapeId) => {
+    console.log('Drag started for shape:', shapeId)
+    setIsDragging(true)
+  }, [])
+
+  const handleDragEnd = useCallback((shapeId, newPosition) => {
+    console.log('Drag ended for shape:', shapeId)
+    setIsDragging(false)
+    updateShapePosition(shapeId, newPosition)
+    broadcastShapeChange(objectStore.get(shapeId), 'update')
+  }, [updateShapePosition, broadcastShapeChange, objectStore])
 
   const handleAddRectangle = useCallback(() => {
     const stage = stageRef.current
@@ -160,6 +179,7 @@ export const Canvas = ({ user, onlineUsers }) => {
   }, [selectShape])
 
   const handleShapeDragEnd = useCallback((shapeId, newPosition) => {
+    setIsDragging(false) // End drag state
     updateShapePosition(shapeId, newPosition)
     
     const updatedShape = shapes.find(s => s.id === shapeId)
@@ -290,10 +310,12 @@ export const Canvas = ({ user, onlineUsers }) => {
                   rectangle={shape}
                   isSelected={isSelected}
                   onSelect={handleShapeSelect}
+                  onDragStart={handleDragStart}
                   onDragEnd={handleShapeDragEnd}
                   onDragMoveBroadcast={handleShapeDragMoveBroadcast}
                   onTransform={handleShapeTransform}
                   onTransformEnd={handleShapeTransformEnd}
+                  onCursorUpdate={updateCursorPosition}
                 />
               )
             case 'circle':
@@ -303,10 +325,12 @@ export const Canvas = ({ user, onlineUsers }) => {
                   circle={shape}
                   isSelected={isSelected}
                   onSelect={handleShapeSelect}
+                  onDragStart={handleDragStart}
                   onDragEnd={handleShapeDragEnd}
                   onDragMoveBroadcast={handleShapeDragMoveBroadcast}
                   onTransform={handleShapeTransform}
                   onTransformEnd={handleShapeTransformEnd}
+                  onCursorUpdate={updateCursorPosition}
                 />
               )
             case 'text':
@@ -318,11 +342,13 @@ export const Canvas = ({ user, onlineUsers }) => {
                   isOwnedByMe={true}
                   isOwnedByOther={false}
                   onSelect={handleShapeSelect}
+                  onDragStart={handleDragStart}
                   onDragEnd={handleShapeDragEnd}
                   onDragMoveBroadcast={handleShapeDragMoveBroadcast}
                   onTextChange={handleTextChange}
                   onTransform={handleShapeTransform}
                   onTransformEnd={handleShapeTransformEnd}
+                  onCursorUpdate={updateCursorPosition}
                 />
               )
             default:
@@ -338,6 +364,7 @@ export const Canvas = ({ user, onlineUsers }) => {
             y={cursor.cursor_y}
             username={cursor.username}
             color={cursor.color || '#3B82F6'}
+            isDragging={cursor.isDragging || false}
           />
         ))}
       </CanvasStage>

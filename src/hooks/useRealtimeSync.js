@@ -15,7 +15,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
 
     try {
       const { data, error } = await supabase
-        .from(TABLES.CANVAS_OBJECTS)
+        .from(TABLES.SHAPES)
         .select('*')
         .order('created_at', { ascending: true })
 
@@ -41,13 +41,13 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
     loadExistingShapes()
 
     const subscription = supabase
-      .channel('canvas_objects')
+      .channel('shapes')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: TABLES.CANVAS_OBJECTS,
+          table: TABLES.SHAPES,
         },
         (payload) => {
           handleRemoteChange('INSERT', payload)
@@ -58,7 +58,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: TABLES.CANVAS_OBJECTS,
+          table: TABLES.SHAPES,
         },
         (payload) => {
           handleRemoteChange('UPDATE', payload)
@@ -69,7 +69,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
         {
           event: 'DELETE',
           schema: 'public',
-          table: TABLES.CANVAS_OBJECTS,
+          table: TABLES.SHAPES,
         },
         (payload) => {
           handleRemoteChange('DELETE', payload)
@@ -155,7 +155,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
       switch (operation) {
         case 'create':
           const { error: insertError } = await supabase
-            .from(TABLES.CANVAS_OBJECTS)
+            .from(TABLES.SHAPES)
             .insert(shapeData)
           
           if (insertError) {
@@ -166,7 +166,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
 
         case 'update':
           const { error: updateError } = await supabase
-            .from(TABLES.CANVAS_OBJECTS)
+            .from(TABLES.SHAPES)
             .update(shapeData)
             .eq('id', shape.id)
           
@@ -178,7 +178,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
 
         case 'delete':
           const { error: deleteError } = await supabase
-            .from(TABLES.CANVAS_OBJECTS)
+            .from(TABLES.SHAPES)
             .delete()
             .eq('id', shape.id)
           
