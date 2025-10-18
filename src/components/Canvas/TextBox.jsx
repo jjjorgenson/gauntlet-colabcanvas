@@ -106,7 +106,8 @@ export const TextBox = ({
       x: node.x(), // Use current Group position
       y: node.y(), // Use current Group position
       width: newWidth,
-      height: newHeight
+      height: newHeight,
+      rotation: node.rotation()
     })
     
     // NO database broadcast during transform - only sync on transform end for performance
@@ -141,7 +142,8 @@ export const TextBox = ({
       x: node.x(),
       y: node.y(),
       width: newWidth,
-      height: newHeight
+      height: newHeight,
+      rotation: node.rotation()
     })
   }
 
@@ -354,6 +356,7 @@ export const TextBox = ({
       y={textBox.y}
       width={textBox.width}
       height={textBox.height}
+      rotation={textBox.rotation}
       draggable={!isOwnedByOther}
       opacity={opacity}
       onDragStart={handleDragStart}

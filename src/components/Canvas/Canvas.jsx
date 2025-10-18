@@ -214,7 +214,8 @@ export const Canvas = ({ user, onlineUsers }) => {
       x: transform.x,
       y: transform.y,
       width: transform.width,
-      height: transform.height
+      height: transform.height,
+      rotation: transform.rotation
     })
     
     // NO database broadcast during transform - only sync on transform end for performance
@@ -227,7 +228,8 @@ export const Canvas = ({ user, onlineUsers }) => {
       x: transform.x,
       y: transform.y,
       width: transform.width,
-      height: transform.height
+      height: transform.height,
+      rotation: transform.rotation
     })
     
     // Broadcast final position to database (only on transform end)

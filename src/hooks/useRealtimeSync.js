@@ -145,6 +145,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
         y: shape.y,
         width: shape.width,
         height: shape.height,
+        rotation: shape.rotation,
         color: shape.color,
         text_content: shape.text_content,
         font_size: shape.font_size,

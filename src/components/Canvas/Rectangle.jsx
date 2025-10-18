@@ -76,7 +76,8 @@ export const Rectangle = ({
       x: node.x(),
       y: node.y(),
       width: newWidth,
-      height: newHeight
+      height: newHeight,
+      rotation: node.rotation()
     })
   }
 
@@ -95,7 +96,8 @@ export const Rectangle = ({
       x: node.x(),
       y: node.y(),
       width: newWidth,
-      height: newHeight
+      height: newHeight,
+      rotation: node.rotation()
     })
   }
 
@@ -106,6 +108,7 @@ export const Rectangle = ({
       y={rectangle.y}
       width={rectangle.width}
       height={rectangle.height}
+      rotation={rectangle.rotation}
       fill={rectangle.color}
       stroke={isSelected ? '#1F2937' : '#E5E7EB'}
       strokeWidth={isSelected ? 2 : 1}

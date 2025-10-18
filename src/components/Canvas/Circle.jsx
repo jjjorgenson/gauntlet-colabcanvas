@@ -80,7 +80,8 @@ export const Circle = ({
       x: node.x() - newRadius, // Convert center position back to top-left
       y: node.y() - newRadius,
       width: newWidth,
-      height: newHeight
+      height: newHeight,
+      rotation: node.rotation()
     })
   }
 
@@ -101,7 +102,8 @@ export const Circle = ({
       x: node.x() - newRadius, // Convert center position back to top-left
       y: node.y() - newRadius,
       width: newWidth,
-      height: newHeight
+      height: newHeight,
+      rotation: node.rotation()
     })
   }
 
@@ -114,6 +116,7 @@ export const Circle = ({
       x={circle.x + radius}
       y={circle.y + radius}
       radius={radius}
+      rotation={circle.rotation}
       fill={circle.color}
       stroke={isSelected ? '#1F2937' : '#E5E7EB'}
       strokeWidth={isSelected ? 2 : 1}
