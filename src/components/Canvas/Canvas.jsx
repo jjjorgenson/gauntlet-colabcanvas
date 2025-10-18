@@ -82,7 +82,6 @@ export const Canvas = ({ user, onlineUsers }) => {
         // Update ObjectStore with ownership release
         const ownershipReleaseData = { owner_id: null, ownership_timestamp: null }
         objectStore.update(shapeId, ownershipReleaseData)
-        console.log('🔄 Ownership released manually:', { shapeId, userId: user.id })
 
         // Update local state
         setOwnedShapes(prev => {
@@ -119,7 +118,6 @@ export const Canvas = ({ user, onlineUsers }) => {
       // Update ObjectStore with ownership release
       const ownershipReleaseData = { owner_id: null, ownership_timestamp: null }
       objectStore.update(shapeId, ownershipReleaseData)
-      console.log('⏰ Ownership released by timeout:', { shapeId, timestamp: new Date().toISOString() })
 
       // Update local state
       setOwnedShapes(prev => {
@@ -143,8 +141,6 @@ export const Canvas = ({ user, onlineUsers }) => {
     if (!user?.id) return false
 
     try {
-      console.log('🔐 Attempting to acquire ownership for shape:', shapeId)
-      
       // Single transaction: check ownership + acquire if unowned
       const { data, error } = await supabase
         .from(TABLES.SHAPES)
@@ -157,15 +153,12 @@ export const Canvas = ({ user, onlineUsers }) => {
         .select() // Return the updated row
         
       if (error) {
-        console.error('❌ Error acquiring ownership:', error)
+        console.error('Error acquiring ownership:', error)
         return false
       }
 
-      console.log('📊 Ownership acquisition result:', { data, error })
-
       if (data && data.length > 0) {
         // Successfully acquired ownership
-        console.log('✅ Ownership acquired successfully!')
         setOwnedShapes(prev => new Set(prev).add(shapeId))
         
         // Update ObjectStore with ownership data
@@ -174,7 +167,6 @@ export const Canvas = ({ user, onlineUsers }) => {
           ownership_timestamp: new Date().toISOString() 
         }
         objectStore.update(shapeId, ownershipData)
-        console.log('✅ Ownership acquired:', { shapeId, userId: user.id, timestamp: ownershipData.ownership_timestamp })
         
         // Start 15-second timeout
         ownershipManager.acquire(shapeId, user.id, (timeoutShapeId) => {
@@ -189,11 +181,10 @@ export const Canvas = ({ user, onlineUsers }) => {
         
         return true
       } else {
-        console.log('❌ Failed to acquire ownership - shape may already be owned')
         return false // Shape already owned
       }
     } catch (error) {
-      console.error('❌ Error in acquireOwnership:', error)
+      console.error('Error in acquireOwnership:', error)
       return false
     }
   }, [user?.id, broadcastShapeChange, handleOwnershipTimeout])
@@ -255,10 +246,6 @@ export const Canvas = ({ user, onlineUsers }) => {
     if (stage) {
       const pointer = stage.getPointerPosition()
       if (pointer) {
-        // Debug: Log mouse move events
-        if (isDragging) {
-          console.log('Mouse move during drag (Stage level):', { x: pointer.x, y: pointer.y })
-        }
         updateCursorPosition(pointer.x, pointer.y)
       }
     }
@@ -266,12 +253,10 @@ export const Canvas = ({ user, onlineUsers }) => {
 
   // Drag state handlers for cursor coordination
   const handleDragStart = useCallback((shapeId) => {
-    console.log('Drag started for shape:', shapeId)
     setIsDragging(true)
   }, [])
 
   const handleDragEnd = useCallback((shapeId, newPosition) => {
-    console.log('Drag ended for shape:', shapeId)
     setIsDragging(false)
     updateShapePosition(shapeId, newPosition)
     broadcastShapeChange(objectStore.get(shapeId), 'update')
@@ -323,44 +308,27 @@ export const Canvas = ({ user, onlineUsers }) => {
   }, [shapes, updateShapePosition, broadcastShapeChange])
 
   const handleShapeSelect = useCallback(async (shapeId) => {
-    console.log('🎯 handleShapeSelect called for shape:', shapeId)
-    
     // Get the shape to check current ownership
     const shape = objectStore.get(shapeId)
-    if (!shape) {
-      console.log('❌ Shape not found in ObjectStore:', shapeId)
-      return
-    }
-
-    console.log('📋 Shape details:', { 
-      id: shape.id, 
-      type: shape.type, 
-      owner_id: shape.owner_id, 
-      current_user: user?.id 
-    })
+    if (!shape) return
 
     // Always release current ownership first (single ownership model)
     await releaseCurrentOwnership()
 
     // If shape is unowned, try to acquire ownership
     if (!shape.owner_id) {
-      console.log('🔓 Shape is unowned, attempting to acquire ownership...')
       const ownershipAcquired = await acquireOwnership(shapeId)
       if (ownershipAcquired) {
-        console.log('✅ Ownership acquired, selecting shape')
         selectShape(shapeId)
-      } else {
-        console.log('❌ Failed to acquire ownership')
       }
     } 
     // If shape is owned by current user, just select it
     else if (shape.owner_id === user?.id) {
-      console.log('👤 Shape owned by current user, selecting')
       selectShape(shapeId)
     }
     // If shape is owned by another user, don't select (no transform handles)
     else {
-      console.log('🚫 Shape is owned by another user, cannot select')
+      console.log('Shape is owned by another user, cannot select')
     }
   }, [selectShape, acquireOwnership, releaseCurrentOwnership, user?.id])
 
@@ -459,7 +427,7 @@ export const Canvas = ({ user, onlineUsers }) => {
         if (data && data.length > 0) {
           const { cleaned_count, remaining_owned } = data[0]
           if (cleaned_count > 0) {
-            console.log(`🧹 Periodic cleanup: Released ${cleaned_count} expired ownerships, ${remaining_owned} still owned`)
+            console.log(`Periodic cleanup: Released ${cleaned_count} expired ownerships, ${remaining_owned} still owned`)
             
             // Update local state to reflect the cleanup
             setOwnedShapes(prev => {

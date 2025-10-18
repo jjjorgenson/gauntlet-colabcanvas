@@ -5,6 +5,8 @@ import { CANVAS_CONFIG } from '../../lib/constants'
 export const Circle = ({ 
   circle, 
   isSelected, 
+  isOwnedByMe,
+  isOwnedByOther,
   onSelect, 
   onDragEnd, 
   onDragStart,
@@ -107,6 +109,27 @@ export const Circle = ({
     })
   }
 
+  // Determine visual properties based on ownership
+  const getVisualProps = () => {
+    if (isOwnedByOther) {
+      return {
+        stroke: '#EF4444', // Red border for owned by others
+        strokeWidth: isSelected ? 2 : 1,
+        opacity: 0.15, // 15% transparency
+        draggable: false // Cannot drag shapes owned by others
+      }
+    } else if (isOwnedByMe || !circle.owner_id) {
+      return {
+        stroke: isSelected ? '#1F2937' : '#E5E7EB',
+        strokeWidth: isSelected ? 2 : 1,
+        opacity: 1, // Full opacity
+        draggable: true // Can drag own shapes or unowned shapes
+      }
+    }
+  }
+
+  const visualProps = getVisualProps()
+
   // Calculate radius from width/height
   const radius = circle.width / 2
 
@@ -118,9 +141,10 @@ export const Circle = ({
       radius={radius}
       rotation={circle.rotation}
       fill={circle.color}
-      stroke={isSelected ? '#1F2937' : '#E5E7EB'}
-      strokeWidth={isSelected ? 2 : 1}
-      draggable
+      stroke={visualProps.stroke}
+      strokeWidth={visualProps.strokeWidth}
+      opacity={visualProps.opacity}
+      draggable={visualProps.draggable}
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
