@@ -208,6 +208,34 @@ export const Canvas = ({ user, onlineUsers }) => {
     }
   }, [broadcastShapeChange, objectStore])
 
+  const changeShapeColor = useCallback((shapeIdOrIds, newColor) => {
+    // Handle both single shape ID and array of shape IDs
+    const shapeIds = Array.isArray(shapeIdOrIds) ? shapeIdOrIds : [shapeIdOrIds]
+    
+    // Update ObjectStore with new color for all shapes
+    shapeIds.forEach(shapeId => {
+      objectStore.update(shapeId, { color: newColor })
+    })
+    
+    // Broadcast color changes to database for all shapes
+    shapeIds.forEach(shapeId => {
+      const updatedShape = objectStore.get(shapeId)
+      if (updatedShape) {
+        broadcastShapeChange(updatedShape, 'update')
+      }
+    })
+  }, [broadcastShapeChange, objectStore])
+
+  const handleColorClick = useCallback((color) => {
+    if (selectedShapeId) {
+      // Change color of selected shape (immediate feedback)
+      changeShapeColor(selectedShapeId, color)
+    } else {
+      // Set color for new shapes (current behavior)
+      setSelectedColor(color)
+    }
+  }, [selectedShapeId, changeShapeColor, setSelectedColor])
+
   const handleShapeTransform = useCallback((shapeId, transform) => {
     // Update local ObjectStore immediately (no throttling for instant UI response)
     objectStore.update(shapeId, {
@@ -280,15 +308,28 @@ export const Canvas = ({ user, onlineUsers }) => {
           </button>
         </div>
         <div className="color-palette">
-          {['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6'].map((color) => (
-            <button
-              key={color}
-              className={`color-button ${selectedColor === color ? 'selected' : ''}`}
-              style={{ backgroundColor: color }}
-              onClick={() => setSelectedColor(color)}
-              title={color}
-            />
-          ))}
+          {['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6'].map((color) => {
+            // Determine which color should show as 'active'
+            let isActive = false
+            if (selectedShapeId) {
+              // If a shape is selected, show its current color as active
+              const selectedShape = objectStore.get(selectedShapeId)
+              isActive = selectedShape?.color === color
+            } else {
+              // If no shape selected, show selectedColor for new shapes as active
+              isActive = selectedColor === color
+            }
+            
+            return (
+              <button
+                key={color}
+                className={`color-button ${isActive ? 'selected' : ''}`}
+                style={{ backgroundColor: color }}
+                onClick={() => handleColorClick(color)}
+                title={color}
+              />
+            )
+          })}
         </div>
       </div>
       
