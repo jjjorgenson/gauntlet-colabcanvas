@@ -51,6 +51,8 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const signup = async (email, password, username) => {
+    console.log('Attempting signup with:', { email, username, password: password ? 'Present' : 'Missing' })
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -62,6 +64,7 @@ export const AuthProvider = ({ children }) => {
     })
     
     if (error) {
+      console.error('Signup error:', error)
       // Handle specific Supabase error messages
       if (error.message.includes('already registered')) {
         throw new Error('This email is already registered')
@@ -69,24 +72,37 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Username is already taken')
       } else if (error.message.includes('password')) {
         throw new Error('Password is too weak')
+      } else if (error.message.includes('500')) {
+        throw new Error('Server error during signup. Please try again.')
       }
-      throw error
+      throw new Error(`Signup failed: ${error.message}`)
     }
     
+    console.log('Signup successful:', data)
     return data
   }
 
   const login = async (email, password) => {
+    console.log('Attempting login with:', { email, password: password ? 'Present' : 'Missing' })
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     })
     
     if (error) {
-      // Generic error message for login
-      throw new Error('Invalid email or password')
+      console.error('Login error:', error)
+      // More specific error handling
+      if (error.message.includes('Invalid login credentials')) {
+        throw new Error('Invalid email or password')
+      } else if (error.message.includes('Email not confirmed')) {
+        throw new Error('Please check your email and confirm your account before logging in')
+      } else {
+        throw new Error(`Login failed: ${error.message}`)
+      }
     }
     
+    console.log('Login successful:', data)
     return data
   }
 
