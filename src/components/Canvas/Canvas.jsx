@@ -11,10 +11,13 @@ import { useRealtimeSync } from '../../hooks/useRealtimeSync'
 import { CANVAS_CONFIG, REALTIME_CONFIG } from '../../lib/constants'
 import { throttle } from '../../utils/syncHelpers'
 import objectStore from '../../lib/ObjectStore'
+import ownershipManager from '../../utils/OwnershipManager'
+import { supabase } from '../../lib/supabase'
 
 export const Canvas = ({ user, onlineUsers }) => {
   const stageRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [ownedShapes, setOwnedShapes] = useState(new Set()) // Track shapes owned by current user
   
   const {
     shapes,
@@ -53,9 +56,11 @@ export const Canvas = ({ user, onlineUsers }) => {
   })
 
   const handleStageClick = useCallback((e) => {
+    // Release current ownership when clicking on empty space
+    releaseCurrentOwnership()
     // Deselect all shapes when clicking on empty space
     deselectAll()
-  }, [deselectAll])
+  }, [deselectAll, releaseCurrentOwnership])
 
   const handleStageDrag = useCallback((e) => {
     // Handle stage panning - position is automatically updated by Konva
@@ -96,7 +101,7 @@ export const Canvas = ({ user, onlineUsers }) => {
       duration: CANVAS_CONFIG.ZOOM_ANIMATION_DURATION / 1000, // Convert to seconds
       easing: Konva.Easings.EaseInOut,
       onFinish: () => {
-        stage.batchDraw()
+    stage.batchDraw()
       }
     })
   }, [])
@@ -174,9 +179,18 @@ export const Canvas = ({ user, onlineUsers }) => {
     }
   }, [shapes, updateShapePosition, broadcastShapeChange])
 
-  const handleShapeSelect = useCallback((shapeId) => {
-    selectShape(shapeId)
-  }, [selectShape])
+  const handleShapeSelect = useCallback(async (shapeId) => {
+    // Try to acquire ownership first
+    const ownershipAcquired = await acquireOwnership(shapeId)
+    
+    if (ownershipAcquired) {
+      // Only select if we successfully acquired ownership
+      selectShape(shapeId)
+    } else {
+      // Shape is already owned by someone else, don't select
+      console.log('Shape is already owned by another user')
+    }
+  }, [selectShape, acquireOwnership])
 
   const handleShapeDragEnd = useCallback((shapeId, newPosition) => {
     setIsDragging(false) // End drag state
@@ -235,6 +249,122 @@ export const Canvas = ({ user, onlineUsers }) => {
       setSelectedColor(color)
     }
   }, [selectedShapeId, changeShapeColor, setSelectedColor])
+
+  // Ownership acquisition handler (single transaction)
+  const acquireOwnership = useCallback(async (shapeId) => {
+    if (!user?.id) return false
+
+    try {
+      // Single transaction: check ownership + acquire if unowned
+      const { data, error } = await supabase
+        .from('shapes')
+        .update({ 
+          owner_id: user.id, 
+          ownership_timestamp: new Date().toISOString() 
+        })
+        .eq('id', shapeId)
+        .is('owner_id', null) // Only if unowned
+        
+      if (error) {
+        console.error('Error acquiring ownership:', error)
+        return false
+      }
+
+      if (data && data.length > 0) {
+        // Successfully acquired ownership
+        setOwnedShapes(prev => new Set(prev).add(shapeId))
+        
+        // Start 15-second timeout
+        ownershipManager.acquire(shapeId, user.id, (timeoutShapeId) => {
+          handleOwnershipTimeout(timeoutShapeId)
+        })
+        
+        // Broadcast ownership change
+        const updatedShape = objectStore.get(shapeId)
+        if (updatedShape) {
+          broadcastShapeChange({ ...updatedShape, owner_id: user.id, ownership_timestamp: new Date().toISOString() }, 'update')
+        }
+        
+        return true
+      }
+      
+      return false // Shape already owned
+    } catch (error) {
+      console.error('Error in acquireOwnership:', error)
+      return false
+    }
+  }, [user?.id, broadcastShapeChange])
+
+  // Handle ownership timeout
+  const handleOwnershipTimeout = useCallback(async (shapeId) => {
+    try {
+      // Release ownership in database
+      const { error } = await supabase
+        .from('shapes')
+        .update({ owner_id: null, ownership_timestamp: null })
+        .eq('id', shapeId)
+        
+      if (error) {
+        console.error('Error releasing ownership on timeout:', error)
+        return
+      }
+
+      // Update local state
+      setOwnedShapes(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(shapeId)
+        return newSet
+      })
+
+      // Broadcast ownership release
+      const updatedShape = objectStore.get(shapeId)
+      if (updatedShape) {
+        broadcastShapeChange({ ...updatedShape, owner_id: null, ownership_timestamp: null }, 'update')
+      }
+    } catch (error) {
+      console.error('Error in handleOwnershipTimeout:', error)
+    }
+  }, [broadcastShapeChange])
+
+  // Release current ownership (click canvas/other shape)
+  const releaseCurrentOwnership = useCallback(async () => {
+    if (!user?.id || ownedShapes.size === 0) return
+
+    const ownedShapesArray = Array.from(ownedShapes)
+    
+    for (const shapeId of ownedShapesArray) {
+      try {
+        // Release ownership in database
+        const { error } = await supabase
+          .from('shapes')
+          .update({ owner_id: null, ownership_timestamp: null })
+          .eq('id', shapeId)
+          
+        if (error) {
+          console.error('Error releasing ownership:', error)
+          continue
+        }
+
+        // Clear timeout
+        ownershipManager.release(shapeId)
+
+        // Update local state
+        setOwnedShapes(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(shapeId)
+          return newSet
+        })
+
+        // Broadcast ownership release
+        const updatedShape = objectStore.get(shapeId)
+        if (updatedShape) {
+          broadcastShapeChange({ ...updatedShape, owner_id: null, ownership_timestamp: null }, 'update')
+        }
+      } catch (error) {
+        console.error('Error releasing ownership for shape:', shapeId, error)
+      }
+    }
+  }, [user?.id, ownedShapes, broadcastShapeChange])
 
   const handleShapeTransform = useCallback((shapeId, transform) => {
     // Update local ObjectStore immediately (no throttling for instant UI response)
@@ -379,7 +509,7 @@ export const Canvas = ({ user, onlineUsers }) => {
             case 'text':
               return (
                 <TextBox
-                  key={shape.id}
+                key={shape.id} 
                   textBox={shape}
                   isSelected={isSelected}
                   isOwnedByMe={true}
