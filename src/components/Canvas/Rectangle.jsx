@@ -5,6 +5,8 @@ import { CANVAS_CONFIG } from '../../lib/constants'
 export const Rectangle = ({
   rectangle,
   isSelected,
+  isOwnedByMe,
+  isOwnedByOther,
   onSelect,
   onDragEnd,
   onDragStart,
@@ -101,6 +103,27 @@ export const Rectangle = ({
     })
   }
 
+  // Determine visual properties based on ownership
+  const getVisualProps = () => {
+    if (isOwnedByOther) {
+      return {
+        stroke: '#EF4444', // Red border for owned by others
+        strokeWidth: isSelected ? 2 : 1,
+        opacity: 0.15, // 15% transparency
+        draggable: false // Cannot drag shapes owned by others
+      }
+    } else if (isOwnedByMe || !rectangle.owner_id) {
+      return {
+        stroke: isSelected ? '#1F2937' : '#E5E7EB',
+        strokeWidth: isSelected ? 2 : 1,
+        opacity: 1, // Full opacity
+        draggable: true // Can drag own shapes or unowned shapes
+      }
+    }
+  }
+
+  const visualProps = getVisualProps()
+
   return (
     <Rect
       id={rectangle.id}
@@ -110,9 +133,10 @@ export const Rectangle = ({
       height={rectangle.height}
       rotation={rectangle.rotation}
       fill={rectangle.color}
-      stroke={isSelected ? '#1F2937' : '#E5E7EB'}
-      strokeWidth={isSelected ? 2 : 1}
-      draggable
+      stroke={visualProps.stroke}
+      strokeWidth={visualProps.strokeWidth}
+      opacity={visualProps.opacity}
+      draggable={visualProps.draggable}
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
