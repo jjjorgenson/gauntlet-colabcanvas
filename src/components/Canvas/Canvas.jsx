@@ -256,6 +256,32 @@ export const Canvas = ({ user, onlineUsers }) => {
     setIsDragging(true)
   }, [])
 
+  // Ownership acquisition handler for drag start
+  const handleDragStartWithOwnership = useCallback(async (shapeId) => {
+    const shape = objectStore.get(shapeId)
+    if (!shape) return false
+
+    // If shape is unowned, try to acquire ownership
+    if (!shape.owner_id) {
+      const ownershipAcquired = await acquireOwnership(shapeId)
+      if (ownershipAcquired) {
+        // Show transform handles after ownership acquisition
+        selectShape(shapeId)
+        return true // Allow drag to proceed
+      } else {
+        return false // Block drag - ownership acquisition failed
+      }
+    }
+    // If owned by current user, allow drag
+    else if (shape.owner_id === user?.id) {
+      return true // Allow drag
+    }
+    // If owned by another user, block the drag
+    else {
+      return false // Block drag
+    }
+  }, [acquireOwnership, selectShape, user?.id])
+
   const handleDragEnd = useCallback((shapeId, newPosition) => {
     setIsDragging(false)
     updateShapePosition(shapeId, newPosition)
@@ -590,6 +616,7 @@ export const Canvas = ({ user, onlineUsers }) => {
                   onTransform={handleShapeTransform}
                   onTransformEnd={handleShapeTransformEnd}
                   onCursorUpdate={updateCursorPosition}
+                  onAcquireOwnership={handleDragStartWithOwnership}
                 />
               )
             case 'circle':
@@ -607,6 +634,7 @@ export const Canvas = ({ user, onlineUsers }) => {
                   onTransform={handleShapeTransform}
                   onTransformEnd={handleShapeTransformEnd}
                   onCursorUpdate={updateCursorPosition}
+                  onAcquireOwnership={handleDragStartWithOwnership}
                 />
               )
             case 'text':
@@ -625,6 +653,7 @@ export const Canvas = ({ user, onlineUsers }) => {
                   onTransform={handleShapeTransform}
                   onTransformEnd={handleShapeTransformEnd}
                   onCursorUpdate={updateCursorPosition}
+                  onAcquireOwnership={handleDragStartWithOwnership}
                 />
               )
             default:

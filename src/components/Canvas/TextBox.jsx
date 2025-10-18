@@ -18,7 +18,8 @@ export const TextBox = ({
   onTransform,
   onTransformEnd,
   onExitEditing,
-  onCursorUpdate
+  onCursorUpdate,
+  onAcquireOwnership
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -28,7 +29,23 @@ export const TextBox = ({
   const blurTimeoutRef = useRef(null)
   const ownershipTimeoutRef = useRef(null)
 
-  const handleDragStart = (e) => {
+  const handleDragStart = async (e) => {
+    // FIRST: Check ownership and acquire if needed
+    if (!isOwnedByMe && !isOwnedByOther) {
+      // Try to acquire ownership for unowned shapes
+      const ownershipAcquired = await onAcquireOwnership?.(textBox.id)
+      if (!ownershipAcquired) {
+        // Block drag if ownership acquisition failed
+        e.evt.preventDefault()
+        return false
+      }
+    } else if (isOwnedByOther) {
+      // Block drag if owned by another user
+      e.evt.preventDefault()
+      return false
+    }
+    
+    // ONLY start dragging if ownership is confirmed
     setIsDragging(true)
     onDragStart?.(textBox.id)
   }
