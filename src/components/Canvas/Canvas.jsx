@@ -8,7 +8,7 @@ import { Cursor } from './Cursor'
 import { useCanvas } from '../../hooks/useCanvas'
 import { useCursors } from '../../hooks/useCursors'
 import { useRealtimeSync } from '../../hooks/useRealtimeSync'
-import { CANVAS_CONFIG, REALTIME_CONFIG } from '../../lib/constants'
+import { CANVAS_CONFIG, REALTIME_CONFIG, TABLES } from '../../lib/constants'
 import { throttle } from '../../utils/syncHelpers'
 import objectStore from '../../lib/ObjectStore'
 import ownershipManager from '../../utils/OwnershipManager'
@@ -65,7 +65,7 @@ export const Canvas = ({ user, onlineUsers }) => {
       try {
         // Release ownership in database
         const { error } = await supabase
-          .from('shapes')
+          .from(TABLES.SHAPES)
           .update({ owner_id: null, ownership_timestamp: null })
           .eq('id', shapeId)
           
@@ -105,7 +105,7 @@ export const Canvas = ({ user, onlineUsers }) => {
     try {
       // Release ownership in database
       const { error } = await supabase
-        .from('shapes')
+        .from(TABLES.SHAPES)
         .update({ owner_id: null, ownership_timestamp: null })
         .eq('id', shapeId)
         
@@ -143,7 +143,7 @@ export const Canvas = ({ user, onlineUsers }) => {
     try {
       // Single transaction: check ownership + acquire if unowned
       const { data, error } = await supabase
-        .from('shapes')
+        .from(TABLES.SHAPES)
         .update({ 
           owner_id: user.id, 
           ownership_timestamp: new Date().toISOString() 

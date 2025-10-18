@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { REALTIME_CONFIG } from '../lib/constants'
+import { REALTIME_CONFIG, TABLES } from '../lib/constants'
 import { throttle } from '../utils/syncHelpers'
 
 // Import getUserColor function from usePresence to ensure consistent colors
@@ -49,7 +49,7 @@ export const useCursors = ({ userId, username, isDragging = false }) => {
     
     try {
       await supabase
-        .from('presence')
+        .from(TABLES.PRESENCE)
         .upsert({
           user_id: userId,
           cursor_x: x,
@@ -161,7 +161,7 @@ export const useCursors = ({ userId, username, isDragging = false }) => {
     const loadInitialCursors = async () => {
       try {
         const { data, error } = await supabase
-          .from('presence')
+          .from(TABLES.PRESENCE)
           .select('user_id, cursor_x, cursor_y, display_name, last_seen')
           .eq('active', true)
           .neq('user_id', userId) // Don't include our own cursor

@@ -15,7 +15,7 @@ export const usePresence = ({ userId, username }) => {
     try {
       // Check if profile exists
       const { data: existingProfile, error: checkError } = await supabase
-        .from('profiles')
+        .from(TABLES.PROFILES)
         .select('id')
         .eq('id', userId)
         .single()
@@ -23,7 +23,7 @@ export const usePresence = ({ userId, username }) => {
       if (checkError && checkError.code === 'PGRST116') {
         // Profile doesn't exist, create it
         const { error: insertError } = await supabase
-          .from('profiles')
+          .from(TABLES.PROFILES)
           .insert({
             id: userId,
             email: username, // username is actually the email from auth
