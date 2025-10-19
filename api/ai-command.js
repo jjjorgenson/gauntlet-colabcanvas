@@ -27,7 +27,14 @@ export default async function handler(req, res) {
   try {
     const { command, canvasContext } = req.body
 
+    console.log('🚀 API REQUEST RECEIVED:', {
+      command,
+      hasCanvasContext: !!canvasContext,
+      timestamp: new Date().toISOString()
+    })
+
     if (!command) {
+      console.log('❌ ERROR: No command provided')
       return res.status(400).json({ error: 'Command is required' })
     }
 
@@ -172,6 +179,8 @@ export default async function handler(req, res) {
       }
     ]
 
+    console.log('🤖 CALLING OPENAI API...')
+    
     // Call OpenAI with function calling
     const response = await openai.chat.completions.create({
       model: 'gpt-4',
@@ -216,18 +225,36 @@ Always call the appropriate functions to accomplish the user's request.`
       temperature: 0.1
     })
 
+    console.log('✅ OPENAI RESPONSE RECEIVED:', {
+      hasMessage: !!response.choices[0]?.message,
+      hasFunctionCall: !!response.choices[0]?.message?.function_call,
+      hasToolCalls: !!response.choices[0]?.message?.tool_calls,
+      toolCallsCount: response.choices[0]?.message?.tool_calls?.length || 0
+    })
+
     const message = response.choices[0].message
     const actions = []
+
+    console.log('🔍 PROCESSING OPENAI MESSAGE:', {
+      hasFunctionCall: !!message.function_call,
+      hasToolCalls: !!message.tool_calls,
+      toolCallsLength: message.tool_calls?.length || 0
+    })
 
     // Process function calls
     if (message.function_call) {
       const functionName = message.function_call.name
       const functionArgs = JSON.parse(message.function_call.arguments)
 
+      console.log('📞 FUNCTION CALL DETECTED:', {
+        functionName,
+        functionArgs
+      })
+
       // Convert function calls to action format expected by frontend
       switch (functionName) {
         case 'createShape':
-          actions.push({
+          const createShapeAction = {
             type: 'create_shape',
             shape: functionArgs.shape,
             color: functionArgs.color,
@@ -235,11 +262,13 @@ Always call the appropriate functions to accomplish the user's request.`
             y: functionArgs.y,
             width: functionArgs.width,
             height: functionArgs.height
-          })
+          }
+          actions.push(createShapeAction)
+          console.log('✅ CREATED SHAPE ACTION:', createShapeAction)
           break
 
         case 'createText':
-          actions.push({
+          const createTextAction = {
             type: 'create_text',
             content: functionArgs.content,
             x: functionArgs.x,
@@ -247,47 +276,63 @@ Always call the appropriate functions to accomplish the user's request.`
             width: functionArgs.width,
             height: functionArgs.height,
             font_size: functionArgs.fontSize || 16
-          })
+          }
+          actions.push(createTextAction)
+          console.log('✅ CREATED TEXT ACTION:', createTextAction)
           break
 
         case 'moveShape':
-          actions.push({
+          const moveShapeAction = {
             type: 'move_shape',
             shapeId: functionArgs.shapeId,
             x: functionArgs.x,
             y: functionArgs.y
-          })
+          }
+          actions.push(moveShapeAction)
+          console.log('✅ CREATED MOVE ACTION:', moveShapeAction)
           break
 
         case 'resizeShape':
-          actions.push({
+          const resizeShapeAction = {
             type: 'resize_shape',
             shapeId: functionArgs.shapeId,
             width: functionArgs.width,
             height: functionArgs.height
-          })
+          }
+          actions.push(resizeShapeAction)
+          console.log('✅ CREATED RESIZE ACTION:', resizeShapeAction)
           break
 
         case 'arrangeShapes':
-          actions.push({
+          const arrangeShapesAction = {
             type: 'arrange_shapes',
             shapeIds: functionArgs.shapeIds,
             pattern: functionArgs.pattern,
             spacing: functionArgs.spacing || 50
-          })
+          }
+          actions.push(arrangeShapesAction)
+          console.log('✅ CREATED ARRANGE ACTION:', arrangeShapesAction)
           break
       }
     }
 
     // Handle multiple function calls (for complex commands)
     if (message.tool_calls) {
-      for (const toolCall of message.tool_calls) {
+      console.log('🔧 PROCESSING TOOL CALLS:', message.tool_calls.length)
+      
+      for (let i = 0; i < message.tool_calls.length; i++) {
+        const toolCall = message.tool_calls[i]
         const functionName = toolCall.function.name
         const functionArgs = JSON.parse(toolCall.function.arguments)
 
+        console.log(`📞 TOOL CALL ${i + 1}:`, {
+          functionName,
+          functionArgs
+        })
+
         switch (functionName) {
           case 'createShape':
-            actions.push({
+            const toolCreateShapeAction = {
               type: 'create_shape',
               shape: functionArgs.shape,
               color: functionArgs.color,
@@ -295,11 +340,13 @@ Always call the appropriate functions to accomplish the user's request.`
               y: functionArgs.y,
               width: functionArgs.width,
               height: functionArgs.height
-            })
+            }
+            actions.push(toolCreateShapeAction)
+            console.log(`✅ TOOL CREATED SHAPE ACTION ${i + 1}:`, toolCreateShapeAction)
             break
 
           case 'createText':
-            actions.push({
+            const toolCreateTextAction = {
               type: 'create_text',
               content: functionArgs.content,
               x: functionArgs.x,
@@ -307,38 +354,51 @@ Always call the appropriate functions to accomplish the user's request.`
               width: functionArgs.width,
               height: functionArgs.height,
               font_size: functionArgs.fontSize || 16
-            })
+            }
+            actions.push(toolCreateTextAction)
+            console.log(`✅ TOOL CREATED TEXT ACTION ${i + 1}:`, toolCreateTextAction)
             break
 
           case 'moveShape':
-            actions.push({
+            const toolMoveShapeAction = {
               type: 'move_shape',
               shapeId: functionArgs.shapeId,
               x: functionArgs.x,
               y: functionArgs.y
-            })
+            }
+            actions.push(toolMoveShapeAction)
+            console.log(`✅ TOOL CREATED MOVE ACTION ${i + 1}:`, toolMoveShapeAction)
             break
 
           case 'resizeShape':
-            actions.push({
+            const toolResizeShapeAction = {
               type: 'resize_shape',
               shapeId: functionArgs.shapeId,
               width: functionArgs.width,
               height: functionArgs.height
-            })
+            }
+            actions.push(toolResizeShapeAction)
+            console.log(`✅ TOOL CREATED RESIZE ACTION ${i + 1}:`, toolResizeShapeAction)
             break
 
           case 'arrangeShapes':
-            actions.push({
+            const toolArrangeShapesAction = {
               type: 'arrange_shapes',
               shapeIds: functionArgs.shapeIds,
               pattern: functionArgs.pattern,
               spacing: functionArgs.spacing || 50
-            })
+            }
+            actions.push(toolArrangeShapesAction)
+            console.log(`✅ TOOL CREATED ARRANGE ACTION ${i + 1}:`, toolArrangeShapesAction)
             break
         }
       }
     }
+
+    console.log('🎯 FINAL ACTIONS TO RETURN:', {
+      actionsCount: actions.length,
+      actions: actions
+    })
 
     return res.status(200).json({ 
       actions: actions,
@@ -347,7 +407,11 @@ Always call the appropriate functions to accomplish the user's request.`
     })
 
   } catch (error) {
-    console.error('OpenAI API error:', error)
+    console.error('💥 OPENAI API ERROR:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
     return res.status(500).json({ 
       error: 'Failed to process command with OpenAI',
       details: error.message
