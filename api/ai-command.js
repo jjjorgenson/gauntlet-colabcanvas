@@ -179,20 +179,20 @@ export default async function handler(req, res) {
       }
     ]
 
-     console.log('🤖 CALLING OPENAI API...')
-     console.log('📋 AVAILABLE FUNCTIONS:', functions.map(f => ({
-       name: f.name,
-       description: f.description,
-       requiredParams: f.parameters.required
-     })))
-     
-     // Call OpenAI with function calling
-     const response = await openai.chat.completions.create({
-       model: 'gpt-4',
-       messages: [
-         {
-           role: 'system',
-           content: `You are a canvas command assistant. Parse user commands and call the appropriate functions to accomplish the task.
+    console.log('🤖 CALLING OPENAI API...')
+    console.log('📋 AVAILABLE FUNCTIONS:', functions.map(f => ({
+      name: f.name,
+      description: f.description,
+      requiredParams: f.parameters.required
+    })))
+    
+    // Call OpenAI with function calling
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a canvas command assistant. Parse user commands and call the appropriate functions to accomplish the task.
 
 CRITICAL: For complex commands, you MUST make MULTIPLE function calls in sequence to create all required elements.
 
@@ -229,26 +229,26 @@ LAYOUT GUIDELINES:
 - Login button: x: 300, y: 370, width: 280, height: 50, color: #3b82f6
 
 You MUST call multiple functions for complex commands. Do not try to create everything in one function call.`
-         },
-         {
-           role: 'user',
-           content: command
-         }
-       ],
-       functions: functions,
-       function_call: 'auto',
-       temperature: 0.1,
-       max_tokens: 4000
-     })
+        },
+        {
+          role: 'user',
+          content: command
+        }
+      ],
+      functions: functions,
+      function_call: 'auto',
+      temperature: 0.1,
+      max_tokens: 4000
+    })
 
-     console.log('✅ OPENAI RESPONSE RECEIVED:', {
-       hasMessage: !!response.choices[0]?.message,
-       hasFunctionCall: !!response.choices[0]?.message?.function_call,
-       hasToolCalls: !!response.choices[0]?.message?.tool_calls,
-       toolCallsCount: response.choices[0]?.message?.tool_calls?.length || 0,
-       functionCallName: response.choices[0]?.message?.function_call?.name,
-       toolCallNames: response.choices[0]?.message?.tool_calls?.map(tc => tc.function.name)
-     })
+    console.log('✅ OPENAI RESPONSE RECEIVED:', {
+      hasMessage: !!response.choices[0]?.message,
+      hasFunctionCall: !!response.choices[0]?.message?.function_call,
+      hasToolCalls: !!response.choices[0]?.message?.tool_calls,
+      toolCallsCount: response.choices[0]?.message?.tool_calls?.length || 0,
+      functionCallName: response.choices[0]?.message?.function_call?.name,
+      toolCallNames: response.choices[0]?.message?.tool_calls?.map(tc => tc.function.name)
+    })
 
     const message = response.choices[0].message
     const actions = []
