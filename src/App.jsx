@@ -41,6 +41,29 @@ const AppContent = () => {
           <h3>CollabCanvas</h3>
           <span className="username">Welcome, {username}</span>
           <button 
+            onClick={() => {
+              // Test button to open AI Command Bar
+              const event = new KeyboardEvent('keydown', {
+                key: 'k',
+                ctrlKey: true,
+                bubbles: true
+              })
+              document.dispatchEvent(event)
+            }}
+            className="ai-test-button"
+            style={{
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              marginRight: '10px',
+              cursor: 'pointer'
+            }}
+          >
+            🤖 AI (Ctrl+K)
+          </button>
+          <button 
             onClick={logout}
             className="logout-button"
           >
