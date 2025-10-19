@@ -92,6 +92,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
   const handleRemoteChange = useCallback((eventType, payload) => {
     // Filter out own changes to avoid duplicates
     if (payload.new?.created_by === userId || payload.old?.created_by === userId) {
+      console.log('🔄 Filtered out own change:', { eventType, shapeId: payload.new?.id || payload.old?.id, createdBy: payload.new?.created_by || payload.old?.created_by })
       return
     }
 
@@ -102,6 +103,7 @@ export const useRealtimeSync = ({ shapes, setShapesFromRemote, userId }) => {
     switch (eventType) {
       case 'INSERT':
         if (payload.new) {
+          console.log('📥 Remote INSERT received:', { shapeId: payload.new.id, type: payload.new.type, createdBy: payload.new.created_by })
           // Add the new shape to the store
           objectStore.add(payload.new)
         }

@@ -8,6 +8,7 @@ import { usePresence } from './hooks/usePresence'
 import { supabase } from './lib/supabase'
 import { TABLES } from './lib/constants'
 import { generateId } from './utils/canvasHelpers'
+import objectStore from './lib/ObjectStore'
 import './App.css'
 
 const AppContent = () => {
@@ -35,6 +36,11 @@ const AppContent = () => {
       }
 
       console.log('✅ Shape created in Supabase, ID:', data.id)
+      
+      // Add the shape to ObjectStore so it appears on canvas immediately
+      console.log('🎨 Adding shape to ObjectStore for immediate display')
+      objectStore.add(data)
+      
       return data
     } catch (error) {
       console.error('💥 Failed to create shape in database:', error)
