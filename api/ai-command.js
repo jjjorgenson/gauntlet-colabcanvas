@@ -194,13 +194,22 @@ export default async function handler(req, res) {
     })))
     
     const requestPayload = {
-      model: 'gpt-4',
+      model: 'gpt-4-turbo',
       messages: [
         {
           role: 'system',
           content: `You are a canvas command assistant. Parse user commands and call the appropriate functions to accomplish the task.
 
 CRITICAL: For complex commands, you MUST make MULTIPLE function calls in sequence to create all required elements. Use the tools array to call multiple functions in one response.
+
+MANDATORY: When you see "create login form", you MUST call exactly 5 functions in parallel:
+1. createText for "Username:" label
+2. createShape for username input field  
+3. createText for "Password:" label
+4. createShape for password input field
+5. createShape for login button
+
+DO NOT stop after 1 function call. You must call ALL 5 functions for login form.
 
 Available colors: red (#ff0000), blue (#0000ff), green (#00ff00), yellow (#ffff00), purple (#800080), black (#000000), white (#ffffff)
 
@@ -253,6 +262,7 @@ You MUST call multiple functions for complex commands. Do not try to create ever
         function: func
       })),
       tool_choice: 'auto',
+      parallel_tool_calls: true,
       temperature: 0.1,
       max_tokens: 4000
     }
