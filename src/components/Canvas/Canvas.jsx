@@ -16,7 +16,7 @@ import objectStore from '../../lib/ObjectStore'
 import ownershipManager from '../../utils/OwnershipManager'
 import { supabase } from '../../lib/supabase'
 
-export const Canvas = ({ user, onlineUsers }) => {
+export const Canvas = ({ user, onlineUsers, updateActivity }) => {
   const stageRef = useRef(null)
   const transformerRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -55,7 +55,8 @@ export const Canvas = ({ user, onlineUsers }) => {
   } = useCursors({ 
     userId: user?.id, 
     username: user?.user_metadata?.username || 'Anonymous',
-    isDragging // Pass drag state to cursor hook
+    isDragging, // Pass drag state to cursor hook
+    updateActivity // Pass activity tracking function
   })
 
 
@@ -73,6 +74,7 @@ export const Canvas = ({ user, onlineUsers }) => {
   useKeyboardShortcuts({
     selectedShapeId,
     userId: user?.id,
+    updateActivity, // Pass activity tracking function
     onShapeDeleted: useCallback((shapeId) => {
       // console.log('🎹 Keyboard: Shape deleted:', shapeId)
       // Shape is already removed from ObjectStore by the hook
@@ -368,6 +370,11 @@ export const Canvas = ({ user, onlineUsers }) => {
   }, [shapes, updateShapePosition, broadcastShapeChange])
 
   const handleShapeSelect = useCallback(async (shapeId) => {
+    // Track activity for shape selection
+    if (updateActivity) {
+      updateActivity()
+    }
+    
     // Get the shape to check current ownership
     const shape = objectStore.get(shapeId)
     if (!shape) return
@@ -393,6 +400,11 @@ export const Canvas = ({ user, onlineUsers }) => {
   }, [selectShape, acquireOwnership, releaseCurrentOwnership, user?.id])
 
   const handleShapeDragEnd = useCallback((shapeId, newPosition) => {
+    // Track activity for shape drag end
+    if (updateActivity) {
+      updateActivity()
+    }
+    
     setIsDragging(false) // End drag state
     updateShapePosition(shapeId, newPosition)
     
@@ -609,6 +621,11 @@ export const Canvas = ({ user, onlineUsers }) => {
   }, [])
 
   const handleShapeTransformEnd = useCallback((shapeId, transform) => {
+    // Track activity for shape transform end
+    if (updateActivity) {
+      updateActivity()
+    }
+    
     // Update local ObjectStore with final position
     objectStore.update(shapeId, {
       x: transform.x,

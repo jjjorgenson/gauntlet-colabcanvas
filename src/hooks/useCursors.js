@@ -27,7 +27,7 @@ const getUserColor = (userId) => {
   return colors[Math.abs(hash) % colors.length]
 }
 
-export const useCursors = ({ userId, username, isDragging = false }) => {
+export const useCursors = ({ userId, username, isDragging = false, updateActivity }) => {
   const [otherCursors, setOtherCursors] = useState([])
   const [myCursor, setMyCursor] = useState({ x: 0, y: 0 })
   const subscriptionRef = useRef(null)
@@ -78,6 +78,10 @@ export const useCursors = ({ userId, username, isDragging = false }) => {
       lastUpdateRef.current = now
       setMyCursor({ x, y })
 
+      // Track activity for cursor movement
+      if (updateActivity) {
+        updateActivity(x, y)
+      }
 
       // Update presence table (lower frequency for DB writes)
       updatePresenceWithCursor(x, y)

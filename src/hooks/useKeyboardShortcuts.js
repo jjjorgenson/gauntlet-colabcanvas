@@ -18,6 +18,7 @@ import objectStore from '../lib/ObjectStore'
 export const useKeyboardShortcuts = ({
   selectedShapeId,
   userId,
+  updateActivity,
   onShapeDeleted,
   onShapeDuplicated,
   onShapeMoved,
@@ -213,12 +214,16 @@ export const useKeyboardShortcuts = ({
       case 'Delete':
       case 'Backspace':
         if (selectedShapeId) {
+          // Track activity for shape deletion
+          if (updateActivity) updateActivity()
           deleteSelectedShape()
         }
         break
 
       case 'd':
         if (ctrlKey && selectedShapeId) {
+          // Track activity for shape duplication
+          if (updateActivity) updateActivity()
           duplicateSelectedShape()
         }
         break
@@ -228,11 +233,15 @@ export const useKeyboardShortcuts = ({
       case 'ArrowLeft':
       case 'ArrowRight':
         if (selectedShapeId) {
+          // Track activity for shape movement
+          if (updateActivity) updateActivity()
           throttledMove(key)
         }
         break
 
       case 'Escape':
+        // Track activity for deselection
+        if (updateActivity) updateActivity()
         onDeselect?.()
         break
 
@@ -243,6 +252,7 @@ export const useKeyboardShortcuts = ({
   }, [
     shouldIgnoreKeyboardEvent,
     selectedShapeId,
+    updateActivity,
     deleteSelectedShape,
     duplicateSelectedShape,
     throttledMove,

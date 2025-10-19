@@ -5,8 +5,10 @@ import { throttle } from '../utils/syncHelpers'
 
 export const usePresence = ({ userId, username }) => {
   const [onlineUsers, setOnlineUsers] = useState([])
+  const [idleUsers, setIdleUsers] = useState(new Set())
   const subscriptionRef = useRef(null)
   const presenceIntervalRef = useRef(null)
+  const idleCheckIntervalRef = useRef(null)
 
   // Ensure profile exists before upserting presence
   const ensureProfileExists = useCallback(async () => {
@@ -42,32 +44,41 @@ export const usePresence = ({ userId, username }) => {
     }
   }, [userId, username])
 
-  // Upsert user presence
-  const upsertPresence = useCallback(async () => {
+  // Update user activity (called on any user action)
+  const updateActivity = useCallback(async (cursorX = null, cursorY = null) => {
     if (!userId) return
 
     try {
       // Ensure profile exists first
       await ensureProfileExists()
 
+      const now = new Date().toISOString()
       const { error } = await supabase
         .from(TABLES.PRESENCE)
         .upsert({
           user_id: userId,
+          cursor_x: cursorX,
+          cursor_y: cursorY,
           active: true,
-          last_seen: new Date().toISOString(),
+          last_seen: now,
+          last_activity: now, // Track activity timestamp
           display_name: username
         }, {
           onConflict: 'user_id'
         })
 
       if (error) {
-        console.error('Error upserting presence:', error)
+        console.error('Error updating activity:', error)
       }
     } catch (error) {
-      console.error('Error in upsertPresence:', error)
+      console.error('Error in updateActivity:', error)
     }
-  }, [userId, ensureProfileExists])
+  }, [userId, username, ensureProfileExists])
+
+  // Upsert user presence (legacy function for compatibility)
+  const upsertPresence = useCallback(async () => {
+    await updateActivity()
+  }, [updateActivity])
 
   // Generate a consistent color for a user ID
   const getUserColor = useCallback((userId) => {
@@ -93,6 +104,63 @@ export const usePresence = ({ userId, username }) => {
     return colors[Math.abs(hash) % colors.length]
   }, [])
 
+  // Check for idle users and clean up inactive ones
+  const checkIdleUsers = useCallback(async () => {
+    try {
+      const now = new Date()
+      const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000)
+      const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000)
+
+      // Get all active users
+      const { data: activeUsers, error: fetchError } = await supabase
+        .from(TABLES.PRESENCE)
+        .select('user_id, last_activity, active')
+        .eq('active', true)
+
+      if (fetchError) {
+        console.error('Error fetching users for idle check:', fetchError)
+        return
+      }
+
+      const newIdleUsers = new Set()
+      const usersToDeactivate = []
+
+      activeUsers?.forEach(user => {
+        const lastActivity = new Date(user.last_activity)
+        
+        if (lastActivity < tenMinutesAgo) {
+          // User has been inactive for 10+ minutes - mark as inactive
+          usersToDeactivate.push(user.user_id)
+        } else if (lastActivity < fiveMinutesAgo) {
+          // User has been inactive for 5+ minutes - mark as idle
+          newIdleUsers.add(user.user_id)
+        }
+      })
+
+      // Update idle users set
+      setIdleUsers(newIdleUsers)
+
+      // Deactivate users who have been inactive for 10+ minutes
+      if (usersToDeactivate.length > 0) {
+        const { error: deactivateError } = await supabase
+          .from(TABLES.PRESENCE)
+          .update({ 
+            active: false, 
+            last_seen: now.toISOString() 
+          })
+          .in('user_id', usersToDeactivate)
+
+        if (deactivateError) {
+          console.error('Error deactivating idle users:', deactivateError)
+        } else {
+          console.log(`Deactivated ${usersToDeactivate.length} idle users`)
+        }
+      }
+    } catch (error) {
+      console.error('Error in checkIdleUsers:', error)
+    }
+  }, [])
+
   // Load all online users with profile information
   const loadOnlineUsers = useCallback(async () => {
     try {
@@ -114,12 +182,19 @@ export const usePresence = ({ userId, username }) => {
         return
       }
 
-      // Add colors and format the data
-      const usersWithColors = (data || []).map(user => ({
-        ...user,
-        username: user.profiles?.username || user.profiles?.display_name || user.profiles?.email || 'Anonymous',
-        color: getUserColor(user.user_id)
-      }))
+      // Add colors, idle status, and format the data
+      const usersWithColors = (data || []).map(user => {
+        const lastActivity = new Date(user.last_activity)
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+        const isIdle = lastActivity < fiveMinutesAgo
+
+        return {
+          ...user,
+          username: user.profiles?.username || user.profiles?.display_name || user.profiles?.email || 'Anonymous',
+          color: getUserColor(user.user_id),
+          isIdle: isIdle
+        }
+      })
 
       setOnlineUsers(usersWithColors)
     } catch (error) {
@@ -189,6 +264,11 @@ export const usePresence = ({ userId, username }) => {
       upsertPresence()
     }, REALTIME_CONFIG.PRESENCE_UPDATE_INTERVAL)
 
+    // Check for idle users every minute
+    idleCheckIntervalRef.current = setInterval(() => {
+      checkIdleUsers()
+    }, 60000) // Check every minute
+
     return () => {
       if (subscriptionRef.current) {
         supabase.removeChannel(subscriptionRef.current)
@@ -196,8 +276,11 @@ export const usePresence = ({ userId, username }) => {
       if (presenceIntervalRef.current) {
         clearInterval(presenceIntervalRef.current)
       }
+      if (idleCheckIntervalRef.current) {
+        clearInterval(idleCheckIntervalRef.current)
+      }
     }
-  }, [userId, upsertPresence, loadOnlineUsers])
+  }, [userId, upsertPresence, loadOnlineUsers, checkIdleUsers])
 
   // Mark user as offline on unmount
   useEffect(() => {
@@ -234,5 +317,8 @@ export const usePresence = ({ userId, username }) => {
 
   return {
     onlineUsers,
+    idleUsers,
+    updateActivity,
+    checkIdleUsers
   }
 }

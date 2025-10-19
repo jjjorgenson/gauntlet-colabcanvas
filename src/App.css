@@ -681,3 +681,71 @@
   color: var(--text-secondary);
   font-size: 0.8rem;
 }
+
+/* User List Styles */
+.users-list {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.users-list h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.users {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.user-item:hover {
+  background-color: var(--bg-hover);
+}
+
+.user-item.current-user {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.user-item.idle {
+  opacity: 0.6;
+}
+
+.user-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: opacity 0.2s ease;
+}
+
+.user-color.idle {
+  opacity: 0.5;
+}
+
+.username {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.user-item.current-user .username {
+  color: white;
+}
+
+.user-item.idle .username {
+  color: var(--text-secondary);
+  font-style: italic;
+}

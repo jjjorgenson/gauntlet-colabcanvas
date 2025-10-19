@@ -15,7 +15,7 @@ import './App.css'
 const AppContent = () => {
   const { user, loading, logout, username } = useAuth()
   
-  const { onlineUsers } = usePresence({ 
+  const { onlineUsers, updateActivity } = usePresence({ 
     userId: user?.id, 
     username: user?.user_metadata?.username || 'Anonymous' 
   })
@@ -271,6 +271,9 @@ const AppContent = () => {
   const handleAICommandResult = useCallback(async (result, originalCommand) => {
     // console.log('🎯 AI Command executed:', result)
     
+    // Track activity for AI command
+    updateActivity()
+    
     // Add command to history
     setCommandHistory(prev => [...prev.slice(-4), {
       command: originalCommand,
@@ -373,7 +376,7 @@ const AppContent = () => {
         }
       }
     }
-  }, [user?.id, insertShapeIntoDatabase])
+  }, [user?.id, insertShapeIntoDatabase, updateActivity])
 
   if (loading) {
     return (
@@ -434,7 +437,7 @@ const AppContent = () => {
       
       <div className="app-main">
         <div className="canvas-wrapper">
-          <Canvas user={user} onlineUsers={onlineUsers} />
+          <Canvas user={user} onlineUsers={onlineUsers} updateActivity={updateActivity} />
         </div>
         
         <div className="sidebar">
