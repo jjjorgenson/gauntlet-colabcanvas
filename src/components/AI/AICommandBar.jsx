@@ -8,8 +8,7 @@ export const AICommandBar = ({ onCommandResult }) => {
   const [error, setError] = useState(null)
   const inputRef = useRef(null)
 
-  // Console.log when component renders
-  console.log('🤖 AICommandBar rendered, isVisible:', isVisible)
+  // Component renders (logging removed as requested)
 
   // Handle Ctrl+K shortcut (Windows)
   useEffect(() => {

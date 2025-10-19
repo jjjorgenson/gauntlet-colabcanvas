@@ -5,6 +5,8 @@ import { Canvas } from './components/Canvas/Canvas'
 import { UsersList } from './components/Presence/UsersList'
 import { AICommandBar } from './components/AI/AICommandBar'
 import { usePresence } from './hooks/usePresence'
+import { supabase } from './lib/supabase'
+import { TABLES } from './lib/constants'
 import './App.css'
 
 const AppContent = () => {
@@ -15,14 +17,40 @@ const AppContent = () => {
     username: user?.user_metadata?.username || 'Anonymous' 
   })
 
+  // Function to insert shape into Supabase database
+  const insertShapeIntoDatabase = useCallback(async (shapeData) => {
+    try {
+      console.log('💾 About to create shape in Supabase:', shapeData)
+      
+      const { data, error } = await supabase
+        .from(TABLES.SHAPES)
+        .insert(shapeData)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Supabase error:', error)
+        throw error
+      }
+
+      console.log('✅ Shape created in Supabase, ID:', data.id)
+      return data
+    } catch (error) {
+      console.error('💥 Failed to create shape in database:', error)
+      throw error
+    }
+  }, [])
+
   // Handle AI command results
-  const handleAICommandResult = useCallback((result) => {
+  const handleAICommandResult = useCallback(async (result) => {
     console.log('🎯 AI Command executed:', result)
     
     if (result.actions && result.actions.length > 0) {
       console.log('🔧 Processing actions:', result.actions)
       
-      result.actions.forEach((action, index) => {
+      // Process actions sequentially to avoid race conditions
+      for (let index = 0; index < result.actions.length; index++) {
+        const action = result.actions[index]
         console.log(`Action ${index + 1}:`, action)
         
         // Create shape data with BRIGHT colors and LARGE size for debugging
@@ -44,11 +72,15 @@ const AppContent = () => {
         
         console.log('🎨 Created shape data:', shapeData)
         
-        // TODO: Insert into database and add to canvas
-        // This will be implemented in the next step
-      })
+        // ACTUALLY INSERT INTO SUPABASE DATABASE
+        try {
+          await insertShapeIntoDatabase(shapeData)
+        } catch (error) {
+          console.error(`💥 Failed to create shape ${index + 1}:`, error)
+        }
+      }
     }
-  }, [user?.id])
+  }, [user?.id, insertShapeIntoDatabase])
 
   if (loading) {
     return (
