@@ -9,6 +9,7 @@ import { Cursor } from './Cursor'
 import { useCanvas } from '../../hooks/useCanvas'
 import { useCursors } from '../../hooks/useCursors'
 import { useRealtimeSync } from '../../hooks/useRealtimeSync'
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts'
 import { CANVAS_CONFIG, REALTIME_CONFIG, TABLES } from '../../lib/constants'
 import { throttle } from '../../utils/syncHelpers'
 import objectStore from '../../lib/ObjectStore'
@@ -66,6 +67,28 @@ export const Canvas = ({ user, onlineUsers }) => {
     shapes, 
     setShapesFromRemote, 
     userId: user?.id 
+  })
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    selectedShapeId,
+    userId: user?.id,
+    onShapeDeleted: useCallback((shapeId) => {
+      console.log('🎹 Keyboard: Shape deleted:', shapeId)
+      // Shape is already removed from ObjectStore by the hook
+    }, []),
+    onShapeDuplicated: useCallback((newShape) => {
+      console.log('🎹 Keyboard: Shape duplicated:', newShape.id)
+      // Shape is already added to ObjectStore and selected by the hook
+    }, []),
+    onShapeMoved: useCallback((shapeId, newPosition) => {
+      console.log('🎹 Keyboard: Shape moved:', shapeId, newPosition)
+      // Shape is already updated in ObjectStore by the hook
+    }, []),
+    onDeselect: useCallback(() => {
+      console.log('🎹 Keyboard: Deselecting all shapes')
+      deselectAll()
+    }, [deselectAll])
   })
 
   // Release current ownership (click canvas/other shape)
