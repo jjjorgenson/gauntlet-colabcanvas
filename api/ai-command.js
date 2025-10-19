@@ -11,6 +11,10 @@ const openai = new OpenAI({
 })
 
 export default async function handler(req, res) {
+  console.log("========================================")
+  console.log("🚨 API CALLED - YOU SHOULD SEE THIS!")
+  console.log("========================================")
+  
   // Enable CORS for localhost:5173
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -32,6 +36,9 @@ export default async function handler(req, res) {
       hasCanvasContext: !!canvasContext,
       timestamp: new Date().toISOString()
     })
+
+    console.log('📝 COMMAND TEXT:', command)
+    console.log('📊 CANVAS CONTEXT:', canvasContext)
 
     if (!command) {
       console.log('❌ ERROR: No command provided')
@@ -186,8 +193,7 @@ export default async function handler(req, res) {
       requiredParams: f.parameters.required
     })))
     
-    // Call OpenAI with function calling
-    const response = await openai.chat.completions.create({
+    const requestPayload = {
       model: 'gpt-4',
       messages: [
         {
@@ -249,7 +255,12 @@ You MUST call multiple functions for complex commands. Do not try to create ever
       tool_choice: 'auto',
       temperature: 0.1,
       max_tokens: 4000
-    })
+    }
+    
+    console.log('📤 OPENAI REQUEST PAYLOAD:', JSON.stringify(requestPayload, null, 2))
+    
+    // Call OpenAI with function calling
+    const response = await openai.chat.completions.create(requestPayload)
 
     console.log('✅ OPENAI RESPONSE RECEIVED:', {
       hasMessage: !!response.choices[0]?.message,
@@ -260,6 +271,9 @@ You MUST call multiple functions for complex commands. Do not try to create ever
       toolCallNames: response.choices[0]?.message?.tool_calls?.map(tc => tc.function.name),
       toolCallTypes: response.choices[0]?.message?.tool_calls?.map(tc => tc.type)
     })
+    
+    console.log('📥 OPENAI RAW RESPONSE:', JSON.stringify(response, null, 2))
+    console.log('🔧 TOOL CALLS ARRAY:', response.choices[0]?.message?.tool_calls)
 
     const message = response.choices[0].message
     const actions = []
@@ -279,6 +293,9 @@ You MUST call multiple functions for complex commands. Do not try to create ever
         functionName,
         functionArgs
       })
+      
+      console.log(`🔨 PROCESSING FUNCTION CALL: ${functionName}`)
+      console.log(`📋 FUNCTION ARGUMENTS:`, JSON.stringify(functionArgs, null, 2))
 
       // Convert function calls to action format expected by frontend
       switch (functionName) {
@@ -358,6 +375,9 @@ You MUST call multiple functions for complex commands. Do not try to create ever
           functionName,
           functionArgs
         })
+        
+        console.log(`🔨 PROCESSING TOOL CALL ${i + 1}: ${functionName}`)
+        console.log(`📋 TOOL CALL ${i + 1} ARGUMENTS:`, JSON.stringify(functionArgs, null, 2))
 
         switch (functionName) {
           case 'createShape':
@@ -427,6 +447,16 @@ You MUST call multiple functions for complex commands. Do not try to create ever
     console.log('🎯 FINAL ACTIONS TO RETURN:', {
       actionsCount: actions.length,
       actions: actions
+    })
+    
+    console.log('📋 FINAL ACTIONS ARRAY:', JSON.stringify(actions, null, 2))
+    console.log(`✅ TOTAL ACTIONS CREATED: ${actions.length}`)
+    
+    actions.forEach((action, index) => {
+      console.log(`🎨 ACTION ${index + 1}:`, {
+        type: action.type,
+        ...action
+      })
     })
 
     return res.status(200).json({ 
