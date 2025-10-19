@@ -48,6 +48,175 @@ const AppContent = () => {
     }
   }, [])
 
+  // Function to move shape in database
+  const moveShapeInDatabase = useCallback(async (shapeId, x, y) => {
+    try {
+      console.log('💾 Moving shape in Supabase:', { shapeId, x, y })
+      
+      const { data, error } = await supabase
+        .from(TABLES.SHAPES)
+        .update({ x, y, updated_at: new Date().toISOString() })
+        .eq('id', shapeId)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Supabase move error:', error)
+        throw error
+      }
+
+      console.log('✅ Shape moved in Supabase:', data.id)
+      
+      // Update ObjectStore
+      objectStore.update(shapeId, { x, y })
+      
+      return data
+    } catch (error) {
+      console.error('💥 Failed to move shape in database:', error)
+      throw error
+    }
+  }, [])
+
+  // Function to resize shape in database
+  const resizeShapeInDatabase = useCallback(async (shapeId, width, height) => {
+    try {
+      console.log('💾 Resizing shape in Supabase:', { shapeId, width, height })
+      
+      const { data, error } = await supabase
+        .from(TABLES.SHAPES)
+        .update({ width, height, updated_at: new Date().toISOString() })
+        .eq('id', shapeId)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Supabase resize error:', error)
+        throw error
+      }
+
+      console.log('✅ Shape resized in Supabase:', data.id)
+      
+      // Update ObjectStore
+      objectStore.update(shapeId, { width, height })
+      
+      return data
+    } catch (error) {
+      console.error('💥 Failed to resize shape in database:', error)
+      throw error
+    }
+  }, [])
+
+  // Function to arrange shapes in database
+  const arrangeShapesInDatabase = useCallback(async (shapeIds, pattern, spacing = 50) => {
+    try {
+      console.log('💾 Arranging shapes in Supabase:', { shapeIds, pattern, spacing })
+      
+      const shapes = objectStore.getAll().filter(shape => shapeIds.includes(shape.id))
+      const positions = calculateArrangementPositions(shapes, pattern, spacing)
+      
+      for (let i = 0; i < shapeIds.length; i++) {
+        const shapeId = shapeIds[i]
+        const position = positions[i]
+        
+        if (position) {
+          const { error } = await supabase
+            .from(TABLES.SHAPES)
+            .update({ 
+              x: position.x, 
+              y: position.y, 
+              updated_at: new Date().toISOString() 
+            })
+            .eq('id', shapeId)
+          
+          if (error) {
+            console.error('❌ Supabase arrange error for shape:', shapeId, error)
+            continue
+          }
+          
+          // Update ObjectStore
+          objectStore.update(shapeId, { x: position.x, y: position.y })
+        }
+      }
+
+      console.log('✅ Shapes arranged in Supabase')
+      
+    } catch (error) {
+      console.error('💥 Failed to arrange shapes in database:', error)
+      throw error
+    }
+  }, [])
+
+  // Helper function to calculate arrangement positions
+  const calculateArrangementPositions = useCallback((shapes, pattern, spacing) => {
+    const positions = []
+    let currentX = 0
+    let currentY = 0
+    
+    switch (pattern) {
+      case 'horizontal_row':
+        shapes.forEach((shape, index) => {
+          positions.push({
+            x: currentX,
+            y: currentY
+          })
+          currentX += shape.width + spacing
+        })
+        break
+        
+      case 'vertical_column':
+        shapes.forEach((shape, index) => {
+          positions.push({
+            x: currentX,
+            y: currentY
+          })
+          currentY += shape.height + spacing
+        })
+        break
+        
+      case 'grid':
+        const cols = Math.ceil(Math.sqrt(shapes.length))
+        shapes.forEach((shape, index) => {
+          const col = index % cols
+          const row = Math.floor(index / cols)
+          positions.push({
+            x: col * (shape.width + spacing),
+            y: row * (shape.height + spacing)
+          })
+        })
+        break
+        
+      default:
+        // Default to horizontal row
+        shapes.forEach((shape, index) => {
+          positions.push({
+            x: index * (shape.width + spacing),
+            y: 0
+          })
+        })
+    }
+    
+    return positions
+  }, [])
+
+  // Get current shapes for canvas context
+  const getCanvasContext = useCallback(() => {
+    const currentShapes = objectStore.getAll()
+    return {
+      shapes: currentShapes.map(shape => ({
+        id: shape.id,
+        type: shape.type,
+        x: shape.x,
+        y: shape.y,
+        width: shape.width,
+        height: shape.height,
+        color: shape.color,
+        text_content: shape.text_content
+      })),
+      canvasWidth: 5000,
+      canvasHeight: 5000
+    }
+  }, [])
+
   // Handle AI command results
   const handleAICommandResult = useCallback(async (result) => {
     console.log('🎯 AI Command executed:', result)
@@ -70,6 +239,25 @@ const AppContent = () => {
             default:
               return actionType
           }
+        }
+
+        // Handle different action types
+        if (action.type === 'move_shape') {
+          console.log('🔄 Moving shape:', action.shapeId, 'to', action.x, action.y)
+          await moveShapeInDatabase(action.shapeId, action.x, action.y)
+          return
+        }
+
+        if (action.type === 'resize_shape') {
+          console.log('📏 Resizing shape:', action.shapeId, 'to', action.width, 'x', action.height)
+          await resizeShapeInDatabase(action.shapeId, action.width, action.height)
+          return
+        }
+
+        if (action.type === 'arrange_shapes') {
+          console.log('📐 Arranging shapes:', action.shapeIds, 'in pattern:', action.pattern)
+          await arrangeShapesInDatabase(action.shapeIds, action.pattern, action.spacing)
+          return
         }
 
         // Create shape data with BRIGHT colors and LARGE size for debugging
@@ -166,7 +354,10 @@ const AppContent = () => {
       </div>
 
       {/* AI Command Bar */}
-      <AICommandBar onCommandResult={handleAICommandResult} />
+      <AICommandBar 
+        onCommandResult={handleAICommandResult}
+        canvasContext={getCanvasContext()}
+      />
     </div>
   )
 }

@@ -18,12 +18,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  try {
-    const { command } = req.body
+    try {
+      const { command, canvasContext } = req.body
 
-    if (!command) {
-      return res.status(400).json({ error: 'Command is required' })
-    }
+      if (!command) {
+        return res.status(400).json({ error: 'Command is required' })
+      }
 
     // Call Claude API with command parsing prompt
     const response = await anthropic.messages.create({
@@ -36,20 +36,31 @@ export default async function handler(req, res) {
 
 Available action types:
 - create_shape: Create new shapes
-- move_shape: Move existing shapes
-- resize_shape: Resize existing shapes
+- move_shape: Move existing shapes (requires shapeId)
+- resize_shape: Resize existing shapes (requires shapeId)
 - create_text: Create text elements
-- arrange_shapes: Arrange multiple shapes
+- arrange_shapes: Arrange multiple shapes (requires shapeIds array)
 
 Available shapes: rectangle, circle, text
 Available colors: red (#ff0000), blue (#0000ff), green (#00ff00), yellow (#ffff00), purple (#800080), black (#000000), white (#ffffff)
 
+Current canvas context:
+${canvasContext ? JSON.stringify(canvasContext, null, 2) : 'No canvas context provided'}
+
 Command patterns to handle:
 - "create [color] [shape]" → create_shape action
-- "add [number] [shapes]" → multiple create_shape actions
+- "add [number] [shapes]" → multiple create_shape actions (position them with 50px spacing)
 - "create text saying [content]" → create_text action
-- "move [shape] to [position]" → move_shape action
-- "resize [shape] to [size]" → resize_shape action
+- "move [description] to [position]" → move_shape action (find shape by description, use shapeId)
+- "make [description] bigger/smaller" → resize_shape action (find shape by description, use shapeId)
+- "arrange [shapes] in [pattern]" → arrange_shapes action (use shapeIds array)
+
+Position keywords:
+- "center" → x: 2500, y: 2500 (canvas center)
+- "top left" → x: 0, y: 0
+- "top right" → x: 4500, y: 0
+- "bottom left" → x: 0, y: 4500
+- "bottom right" → x: 4500, y: 4500
 
 Default positions: x: 0, y: 0 (top-left corner for visibility)
 Default sizes: width: 300, height: 300 (large for debugging)
@@ -83,6 +94,42 @@ For text:
       "y": 0,
       "width": 300,
       "height": 300
+    }
+  ]
+}
+
+For moving shapes:
+{
+  "actions": [
+    {
+      "type": "move_shape",
+      "shapeId": "uuid-of-shape",
+      "x": 2500,
+      "y": 2500
+    }
+  ]
+}
+
+For resizing shapes:
+{
+  "actions": [
+    {
+      "type": "resize_shape",
+      "shapeId": "uuid-of-shape",
+      "width": 400,
+      "height": 400
+    }
+  ]
+}
+
+For arranging shapes:
+{
+  "actions": [
+    {
+      "type": "arrange_shapes",
+      "shapeIds": ["uuid1", "uuid2", "uuid3"],
+      "pattern": "horizontal_row",
+      "spacing": 50
     }
   ]
 }

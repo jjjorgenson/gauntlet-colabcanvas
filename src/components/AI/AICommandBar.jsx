@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import './AICommandBar.css'
 
-export const AICommandBar = ({ onCommandResult }) => {
+export const AICommandBar = ({ onCommandResult, canvasContext }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [command, setCommand] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -52,7 +52,10 @@ export const AICommandBar = ({ onCommandResult }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ command: command.trim() })
+        body: JSON.stringify({ 
+          command: command.trim(),
+          canvasContext: canvasContext || null
+        })
       })
 
       if (!response.ok) {
