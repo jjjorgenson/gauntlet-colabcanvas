@@ -72,6 +72,24 @@ export const AICommandBar = ({ onCommandResult, canvasContext, resolveReferences
       const result = await response.json()
       console.log('✅ AI Command Result:', result)
       
+      // DEBUG: Log each action with dimensions
+      if (result.actions && result.actions.length > 0) {
+        console.log('🔍 API ACTIONS WITH DIMENSIONS:')
+        result.actions.forEach((action, index) => {
+          console.log(`Action ${index + 1}:`, {
+            type: action.type,
+            x: action.x,
+            y: action.y,
+            width: action.width,
+            height: action.height,
+            color: action.color,
+            content: action.content,
+            text_content: action.text_content,
+            font_size: action.font_size
+          })
+        })
+      }
+      
       // Execute the actions on the canvas
       if (result.actions && result.actions.length > 0) {
         console.log('⚡ Executing actions:', result.actions)

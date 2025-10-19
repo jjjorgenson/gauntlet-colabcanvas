@@ -26,7 +26,17 @@ const AppContent = () => {
   // Function to insert shape into Supabase database
   const insertShapeIntoDatabase = useCallback(async (shapeData) => {
     try {
-      console.log('💾 About to create shape in Supabase:', shapeData)
+      console.log('💾 SUPABASE INSERT - Input shapeData:', {
+        id: shapeData.id,
+        type: shapeData.type,
+        x: shapeData.x,
+        y: shapeData.y,
+        width: shapeData.width,
+        height: shapeData.height,
+        color: shapeData.color,
+        text_content: shapeData.text_content,
+        font_size: shapeData.font_size
+      })
       
       const { data, error } = await supabase
         .from(TABLES.SHAPES)
@@ -39,7 +49,17 @@ const AppContent = () => {
         throw error
       }
 
-      console.log('✅ Shape created in Supabase, ID:', data.id)
+      console.log('✅ SUPABASE INSERT - Returned data:', {
+        id: data.id,
+        type: data.type,
+        x: data.x,
+        y: data.y,
+        width: data.width,
+        height: data.height,
+        color: data.color,
+        text_content: data.text_content,
+        font_size: data.font_size
+      })
       
       // Add the shape to ObjectStore so it appears on canvas immediately
       console.log('🎨 Adding shape to ObjectStore for immediate display')
@@ -296,24 +316,47 @@ const AppContent = () => {
           return
         }
 
-        // Create shape data with BRIGHT colors and LARGE size for debugging
+        // DEBUG: Log the raw action from API
+        console.log('🔍 RAW ACTION FROM API:', {
+          type: action.type,
+          x: action.x,
+          y: action.y,
+          width: action.width,
+          height: action.height,
+          color: action.color,
+          content: action.content,
+          text_content: action.text_content,
+          font_size: action.font_size
+        })
+
+        // Create shape data using API values (not hardcoded defaults)
         const shapeData = {
           id: generateId(), // Generate proper UUID
           type: mapActionTypeToDbType(action.type), // Map to correct database type
-          x: action.x || 0, // Use 0,0 for visibility
-          y: action.y || 0,
-          width: 300, // LARGE size for debugging
-          height: 300,
-          color: action.color || '#ff0000', // BRIGHT RED for debugging
+          x: action.x || 0, // Use API x value
+          y: action.y || 0, // Use API y value
+          width: action.width || 300, // Use API width value (fallback to 300)
+          height: action.height || 300, // Use API height value (fallback to 300)
+          color: action.color || '#ff0000', // Use API color value
           rotation: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           created_by: user?.id,
           text_content: action.content || action.text_content || null, // Handle both content and text_content
-          font_size: 16
+          font_size: action.font_size || 16 // Use API font_size value
         }
         
-        console.log('🎨 Created shape data:', shapeData)
+        console.log('🎨 SHAPE DATA TO INSERT:', {
+          id: shapeData.id,
+          type: shapeData.type,
+          x: shapeData.x,
+          y: shapeData.y,
+          width: shapeData.width,
+          height: shapeData.height,
+          color: shapeData.color,
+          text_content: shapeData.text_content,
+          font_size: shapeData.font_size
+        })
         
         // ACTUALLY INSERT INTO SUPABASE DATABASE
         try {

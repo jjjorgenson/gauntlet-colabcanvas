@@ -607,19 +607,19 @@ export const Canvas = ({ user, onlineUsers }) => {
       >
         {/* Render all shapes */}
         {shapes.map((shape) => {
-          // DEBUG: Only log AI shapes or when shapes array changes
-          const isAIShape = shape.id?.startsWith('ai-')
-          if (isAIShape) {
-            console.log('🎯 AI SHAPE RENDERING:', {
-              id: shape.id,
-              type: shape.type,
-              x: shape.x,
-              y: shape.y,
-              width: shape.width,
-              height: shape.height,
-              color: shape.color
-            })
-          }
+          // DEBUG: Log all shapes with dimensions for debugging
+          console.log('🎨 KONVA RENDERING SHAPE:', {
+            id: shape.id,
+            type: shape.type,
+            x: shape.x,
+            y: shape.y,
+            width: shape.width,
+            height: shape.height,
+            color: shape.color,
+            text_content: shape.text_content,
+            font_size: shape.font_size,
+            source: 'ObjectStore'
+          })
           
           const isSelected = selectedShapeId === shape.id
           const isOwnedByMe = shape.owner_id === user?.id
