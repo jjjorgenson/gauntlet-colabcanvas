@@ -44,7 +44,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ 
       response: claudeResponse.text,
-      command: command
+      command: command,
+      timestamp: new Date().toISOString()
     })
 
   } catch (error) {
