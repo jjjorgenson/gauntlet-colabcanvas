@@ -228,7 +228,7 @@ export const TextBox = ({
 
   const handleClick = (e) => {
     e.cancelBubble = true
-    onSelect?.(textBox.id)
+    onSelect?.(textBox.id, e.evt)
     
     // If we're in editing mode and click on the textbox, stay in editing mode
     // If we click outside (handled by parent), we'll exit editing mode

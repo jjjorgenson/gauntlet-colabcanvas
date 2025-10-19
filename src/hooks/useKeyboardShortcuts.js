@@ -11,12 +11,13 @@ import objectStore from '../lib/ObjectStore'
  * @param {string|null} selectedShapeId - Currently selected shape ID
  * @param {string} userId - Current user ID
  * @param {Function} onShapeDeleted - Callback when shape is deleted
- * @param {Function} onShapeDuplicated - Callback when shape is duplicated
+ * @param {Function} onShapeDuplicated - Callback when shape is duplicated (Ctrl+D)
  * @param {Function} onShapeMoved - Callback when shape is moved
  * @param {Function} onDeselect - Callback to deselect all shapes
  */
 export const useKeyboardShortcuts = ({
   selectedShapeId,
+  selectedShapeIds = [],
   userId,
   updateActivity,
   onShapeDeleted,
@@ -44,53 +45,57 @@ export const useKeyboardShortcuts = ({
     return false
   }, [])
 
-  // Delete selected shape
+  // Delete selected shapes
   const deleteSelectedShape = useCallback(async () => {
-    if (!selectedShapeId || !userId) return
+    if (selectedShapeIds.length === 0 || !userId) return
 
     try {
-      console.log('🗑️ Deleting shape:', selectedShapeId)
+      console.log('🗑️ Deleting shapes:', selectedShapeIds)
       
       // Remove from Supabase
       const { error } = await supabase
         .from(TABLES.SHAPES)
         .delete()
-        .eq('id', selectedShapeId)
+        .in('id', selectedShapeIds)
         .eq('created_by', userId) // Only delete own shapes
 
       if (error) {
-        console.error('❌ Error deleting shape:', error)
+        console.error('❌ Error deleting shapes:', error)
         return
       }
 
       // Remove from ObjectStore
-      objectStore.remove(selectedShapeId)
+      selectedShapeIds.forEach(shapeId => {
+        objectStore.remove(shapeId)
+        onShapeDeleted?.(shapeId)
+      })
       
-      // Notify parent component
-      onShapeDeleted?.(selectedShapeId)
-      
-      console.log('✅ Shape deleted successfully')
+      console.log('✅ Shapes deleted successfully')
     } catch (error) {
-      console.error('💥 Failed to delete shape:', error)
+      console.error('💥 Failed to delete shapes:', error)
     }
-  }, [selectedShapeId, userId, onShapeDeleted])
+  }, [selectedShapeIds, userId, onShapeDeleted])
 
-  // Duplicate selected shape
+  // Duplicate selected shapes
   const duplicateSelectedShape = useCallback(async () => {
-    if (!selectedShapeId || !userId) return
+    if (selectedShapeIds.length === 0 || !userId) return
 
     try {
-      const originalShape = objectStore.get(selectedShapeId)
-      if (!originalShape) return
-
-      console.log('📋 Duplicating shape:', selectedShapeId)
+      console.log('📋 Duplicating shapes:', selectedShapeIds)
       
-      // Create new shape with same properties but offset position
-      const duplicatedShape = {
+      // Get all original shapes
+      const originalShapes = selectedShapeIds
+        .map(id => objectStore.get(id))
+        .filter(Boolean)
+      
+      if (originalShapes.length === 0) return
+
+      // Create duplicated shapes with offset positions
+      const duplicatedShapes = originalShapes.map((originalShape, index) => ({
         id: generateId(),
         type: originalShape.type,
-        x: originalShape.x + 20, // Offset by 20px
-        y: originalShape.y + 20, // Offset by 20px
+        x: originalShape.x + 20 + (index * 10), // Offset by 20px + index * 10px
+        y: originalShape.y + 20 + (index * 10), // Offset by 20px + index * 10px
         width: originalShape.width,
         height: originalShape.height,
         color: originalShape.color,
@@ -100,90 +105,118 @@ export const useKeyboardShortcuts = ({
         created_by: userId,
         text_content: originalShape.text_content,
         font_size: originalShape.font_size
-      }
+      }))
 
       // Insert into Supabase
       const { data, error } = await supabase
         .from(TABLES.SHAPES)
-        .insert(duplicatedShape)
+        .insert(duplicatedShapes)
         .select()
-        .single()
 
       if (error) {
-        console.error('❌ Error duplicating shape:', error)
+        console.error('❌ Error duplicating shapes:', error)
         return
       }
 
-      // Add to ObjectStore
-      objectStore.add(data)
+      // Add to ObjectStore and select all new shapes
+      data.forEach(duplicatedShape => {
+        objectStore.add(duplicatedShape)
+        onShapeDuplicated?.(duplicatedShape)
+      })
       
-      // Select the new shape
-      objectStore.setSelected(data.id)
+      // Select all duplicated shapes
+      objectStore.clearSelection()
+      data.forEach(duplicatedShape => {
+        objectStore.addToSelection(duplicatedShape.id)
+      })
       
-      // Notify parent component
-      onShapeDuplicated?.(data)
-      
-      console.log('✅ Shape duplicated successfully:', data.id)
+      console.log('✅ Shapes duplicated successfully:', data.map(s => s.id))
     } catch (error) {
-      console.error('💥 Failed to duplicate shape:', error)
+      console.error('💥 Failed to duplicate shapes:', error)
     }
-  }, [selectedShapeId, userId, onShapeDuplicated])
+  }, [selectedShapeIds, userId, onShapeDuplicated])
 
-  // Move selected shape (throttled)
+  // Move selected shapes (throttled)
   const moveSelectedShape = useCallback(async (direction) => {
-    if (!selectedShapeId || !userId) return
-
-    const shape = objectStore.get(selectedShapeId)
-    if (!shape) return
+    if (selectedShapeIds.length === 0 || !userId) return
 
     const moveDistance = 10
-    let newX = shape.x
-    let newY = shape.y
+    const shapes = selectedShapeIds
+      .map(id => objectStore.get(id))
+      .filter(Boolean)
+    
+    if (shapes.length === 0) return
 
-    switch (direction) {
-      case 'ArrowUp':
-        newY -= moveDistance
-        break
-      case 'ArrowDown':
-        newY += moveDistance
-        break
-      case 'ArrowLeft':
-        newX -= moveDistance
-        break
-      case 'ArrowRight':
-        newX += moveDistance
-        break
-      default:
-        return
-    }
+    // Calculate new positions for all shapes
+    const updates = shapes.map(shape => {
+      let newX = shape.x
+      let newY = shape.y
+
+      switch (direction) {
+        case 'ArrowUp':
+          newY -= moveDistance
+          break
+        case 'ArrowDown':
+          newY += moveDistance
+          break
+        case 'ArrowLeft':
+          newX -= moveDistance
+          break
+        case 'ArrowRight':
+          newX += moveDistance
+          break
+        default:
+          return null
+      }
+
+      return { id: shape.id, x: newX, y: newY }
+    }).filter(Boolean)
+
+    if (updates.length === 0) return
 
     try {
-      // Update in Supabase
+      // Update all shapes in Supabase
       const { error } = await supabase
         .from(TABLES.SHAPES)
         .update({ 
-          x: newX, 
-          y: newY, 
           updated_at: new Date().toISOString() 
         })
-        .eq('id', selectedShapeId)
+        .in('id', selectedShapeIds)
         .eq('created_by', userId) // Only move own shapes
 
       if (error) {
-        console.error('❌ Error moving shape:', error)
+        console.error('❌ Error moving shapes:', error)
         return
       }
 
-      // Update in ObjectStore
-      objectStore.update(selectedShapeId, { x: newX, y: newY })
+      // Update each shape individually with new position
+      for (const update of updates) {
+        const { error: updateError } = await supabase
+          .from(TABLES.SHAPES)
+          .update({ 
+            x: update.x, 
+            y: update.y, 
+            updated_at: new Date().toISOString() 
+          })
+          .eq('id', update.id)
+
+        if (updateError) {
+          console.error('❌ Error updating shape position:', updateError)
+          continue
+        }
+
+        // Update in ObjectStore
+        objectStore.update(update.id, { x: update.x, y: update.y })
+        
+        // Notify parent component
+        onShapeMoved?.(update.id, { x: update.x, y: update.y })
+      }
       
-      // Notify parent component
-      onShapeMoved?.(selectedShapeId, { x: newX, y: newY })
-      
+      console.log('✅ Shapes moved successfully')
     } catch (error) {
-      console.error('💥 Failed to move shape:', error)
+      console.error('💥 Failed to move shapes:', error)
     }
-  }, [selectedShapeId, userId, onShapeMoved])
+  }, [selectedShapeIds, userId, onShapeMoved])
 
   // Throttled version of move function
   const throttledMove = useCallback(
@@ -198,7 +231,7 @@ export const useKeyboardShortcuts = ({
       return
     }
 
-    const { key, ctrlKey } = event
+    const { key, ctrlKey, shiftKey } = event
 
     // Prevent browser defaults for our shortcuts
     if (key === 'Delete' || key === 'Backspace' || 
@@ -213,7 +246,7 @@ export const useKeyboardShortcuts = ({
     switch (key) {
       case 'Delete':
       case 'Backspace':
-        if (selectedShapeId) {
+        if (selectedShapeIds.length > 0) {
           // Track activity for shape deletion
           if (updateActivity) updateActivity()
           deleteSelectedShape()
@@ -221,7 +254,7 @@ export const useKeyboardShortcuts = ({
         break
 
       case 'd':
-        if (ctrlKey && selectedShapeId) {
+        if (ctrlKey && selectedShapeIds.length > 0) {
           // Track activity for shape duplication
           if (updateActivity) updateActivity()
           duplicateSelectedShape()
@@ -232,7 +265,7 @@ export const useKeyboardShortcuts = ({
       case 'ArrowDown':
       case 'ArrowLeft':
       case 'ArrowRight':
-        if (selectedShapeId) {
+        if (selectedShapeIds.length > 0) {
           // Track activity for shape movement
           if (updateActivity) updateActivity()
           throttledMove(key)

@@ -17,6 +17,10 @@ export const useCanvas = () => {
     objectStore.subscribe,
     objectStore.getSelected
   )
+  const selectedShapeIds = useSyncExternalStore(
+    objectStore.subscribe,
+    objectStore.getSelectedIds
+  )
   
   // Keep color selection in React state (UI-only concern)
   const [selectedColor, setSelectedColor] = useState('#3B82F6')
@@ -52,7 +56,23 @@ export const useCanvas = () => {
   }, [])
 
   const deselectAll = useCallback(() => {
-    objectStore.setSelected(null)
+    objectStore.clearSelection()
+  }, [])
+
+  const addToSelection = useCallback((shapeId) => {
+    objectStore.addToSelection(shapeId)
+  }, [])
+
+  const removeFromSelection = useCallback((shapeId) => {
+    objectStore.removeFromSelection(shapeId)
+  }, [])
+
+  const toggleSelection = useCallback((shapeId) => {
+    objectStore.toggleSelection(shapeId)
+  }, [])
+
+  const isSelected = useCallback((shapeId) => {
+    return objectStore.isSelected(shapeId)
   }, [])
 
   const setShapesFromRemote = useCallback((remoteShapes) => {
@@ -62,6 +82,7 @@ export const useCanvas = () => {
   return {
     shapes,
     selectedShapeId,
+    selectedShapeIds,
     selectedColor,
     addRectangle,
     addCircle,
@@ -69,6 +90,10 @@ export const useCanvas = () => {
     updateShapePosition,
     selectShape,
     deselectAll,
+    addToSelection,
+    removeFromSelection,
+    toggleSelection,
+    isSelected,
     setShapesFromRemote,
     setSelectedColor,
     // Expose objectStore for direct access if needed

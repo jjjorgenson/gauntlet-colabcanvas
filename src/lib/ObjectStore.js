@@ -7,6 +7,7 @@ class ObjectStore {
     this.objects = new Map()
     this.listeners = new Set()
     this.selectedId = null
+    this.selectedIds = new Set() // Track multiple selected shapes
     this.editingIds = new Set() // Track which shapes are being edited
     this.ownedShapes = new Map() // Track ownership: shapeId -> {ownerId, ownedAt}
     this.positionBuffer = new Map() // Buffer for smooth interpolation: shapeId -> [{x, y, timestamp}, ...]
@@ -15,6 +16,8 @@ class ObjectStore {
     this._arrayVersion = -1
     this._cachedSelected = null
     this._selectedVersion = -1
+    this._cachedSelectedIds = null
+    this._selectedIdsVersion = -1
   }
 
   /**
@@ -115,16 +118,20 @@ class ObjectStore {
   }
 
   /**
-   * Set the selected object ID
+   * Set the selected object ID (single selection)
    * @param {string|null} id - Object ID to select, or null to deselect
    */
   setSelected(id) {
     this.selectedId = id
+    this.selectedIds.clear()
+    if (id) {
+      this.selectedIds.add(id)
+    }
     this.notify()
   }
 
   /**
-   * Get the selected object ID
+   * Get the selected object ID (primary selection)
    * @returns {string|null} Selected object ID
    */
   getSelected() {
@@ -137,11 +144,87 @@ class ObjectStore {
   }
 
   /**
-   * Get the selected object
+   * Get all selected object IDs
+   * @returns {Array<string>} Array of selected object IDs
+   */
+  getSelectedIds() {
+    // Return the same reference if nothing changed
+    if (!this._cachedSelectedIds || this._selectedIdsVersion !== this._version) {
+      this._cachedSelectedIds = Array.from(this.selectedIds)
+      this._selectedIdsVersion = this._version
+    }
+    return this._cachedSelectedIds
+  }
+
+  /**
+   * Add a shape to selection (for multi-select)
+   * @param {string} id - Object ID to add to selection
+   */
+  addToSelection(id) {
+    if (this.objects.has(id)) {
+      this.selectedIds.add(id)
+      this.selectedId = id // Last added becomes primary
+      this.notify()
+    }
+  }
+
+  /**
+   * Remove a shape from selection
+   * @param {string} id - Object ID to remove from selection
+   */
+  removeFromSelection(id) {
+    this.selectedIds.delete(id)
+    // If this was the primary selection, pick a new primary
+    if (this.selectedId === id) {
+      this.selectedId = this.selectedIds.size > 0 ? Array.from(this.selectedIds)[this.selectedIds.size - 1] : null
+    }
+    this.notify()
+  }
+
+  /**
+   * Toggle a shape in selection (add if not selected, remove if selected)
+   * @param {string} id - Object ID to toggle
+   */
+  toggleSelection(id) {
+    if (this.selectedIds.has(id)) {
+      this.removeFromSelection(id)
+    } else {
+      this.addToSelection(id)
+    }
+  }
+
+  /**
+   * Clear all selections
+   */
+  clearSelection() {
+    this.selectedId = null
+    this.selectedIds.clear()
+    this.notify()
+  }
+
+  /**
+   * Check if a shape is selected
+   * @param {string} id - Object ID to check
+   * @returns {boolean} True if selected
+   */
+  isSelected(id) {
+    return this.selectedIds.has(id)
+  }
+
+  /**
+   * Get the selected object (primary selection)
    * @returns {Object|null} Selected object or null
    */
   getSelectedObject() {
     return this.selectedId ? this.get(this.selectedId) : null
+  }
+
+  /**
+   * Get all selected objects
+   * @returns {Array<Object>} Array of selected objects
+   */
+  getSelectedObjects() {
+    return Array.from(this.selectedIds).map(id => this.get(id)).filter(Boolean)
   }
 
   /**
@@ -379,6 +462,13 @@ const boundObjectStore = {
   
   // Selection management
   setSelected: objectStore.setSelected.bind(objectStore),
+  getSelectedIds: objectStore.getSelectedIds.bind(objectStore),
+  addToSelection: objectStore.addToSelection.bind(objectStore),
+  removeFromSelection: objectStore.removeFromSelection.bind(objectStore),
+  toggleSelection: objectStore.toggleSelection.bind(objectStore),
+  clearSelection: objectStore.clearSelection.bind(objectStore),
+  isSelected: objectStore.isSelected.bind(objectStore),
+  getSelectedObjects: objectStore.getSelectedObjects.bind(objectStore),
   
   // Editing state management
   setEditing: objectStore.setEditing.bind(objectStore),

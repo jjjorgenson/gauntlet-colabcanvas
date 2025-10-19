@@ -161,7 +161,7 @@ export const Rectangle = ({
       onTransformEnd={handleTransformEnd}
       onClick={(e) => {
         e.cancelBubble = true
-        onSelect?.(rectangle.id)
+        onSelect?.(rectangle.id, e.evt)
       }}
       shadowColor="black"
       shadowBlur={isDragging ? 10 : 5}

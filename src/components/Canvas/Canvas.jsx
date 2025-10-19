@@ -25,6 +25,7 @@ export const Canvas = ({ user, onlineUsers, updateActivity }) => {
   const {
     shapes,
     selectedShapeId,
+    selectedShapeIds,
     selectedColor,
     addRectangle,
     addCircle,
@@ -32,6 +33,10 @@ export const Canvas = ({ user, onlineUsers, updateActivity }) => {
     updateShapePosition,
     selectShape,
     deselectAll,
+    addToSelection,
+    removeFromSelection,
+    toggleSelection,
+    isSelected,
     setShapesFromRemote,
     setSelectedColor,
     objectStore,
@@ -73,6 +78,7 @@ export const Canvas = ({ user, onlineUsers, updateActivity }) => {
   // Keyboard shortcuts
   useKeyboardShortcuts({
     selectedShapeId,
+    selectedShapeIds,
     userId: user?.id,
     updateActivity, // Pass activity tracking function
     onShapeDeleted: useCallback((shapeId) => {
@@ -225,6 +231,67 @@ export const Canvas = ({ user, onlineUsers, updateActivity }) => {
     }
   }, [user?.id, broadcastShapeChange, handleOwnershipTimeout])
 
+  // Ownership acquisition handler for multiple shapes
+  const acquireOwnershipForMultiple = useCallback(async (shapeIds) => {
+    if (!user?.id || !shapeIds.length) return false
+
+    try {
+      // Update all shapes in a single transaction
+      const { data, error } = await supabase
+        .from(TABLES.SHAPES)
+        .update({ 
+          owner_id: user.id, 
+          ownership_timestamp: new Date().toISOString() 
+        })
+        .in('id', shapeIds)
+        .is('owner_id', null) // Only if unowned
+        .select() // Return the updated rows
+        
+      if (error) {
+        console.error('Error acquiring ownership for multiple shapes:', error)
+        return false
+      }
+
+      if (data && data.length > 0) {
+        // Successfully acquired ownership for some shapes
+        const acquiredShapeIds = data.map(shape => shape.id)
+        setOwnedShapes(prev => {
+          const newSet = new Set(prev)
+          acquiredShapeIds.forEach(id => newSet.add(id))
+          return newSet
+        })
+        
+        // Update ObjectStore with ownership data for all acquired shapes
+        const ownershipData = { 
+          owner_id: user.id, 
+          ownership_timestamp: new Date().toISOString() 
+        }
+        
+        acquiredShapeIds.forEach(shapeId => {
+          objectStore.update(shapeId, ownershipData)
+          
+          // Start 15-second timeout for each shape
+          ownershipManager.acquire(shapeId, user.id, (timeoutShapeId) => {
+            handleOwnershipTimeout(timeoutShapeId)
+          })
+          
+          // Broadcast ownership change
+          const updatedShape = objectStore.get(shapeId)
+          if (updatedShape) {
+            broadcastShapeChange({ ...updatedShape, ...ownershipData }, 'update')
+          }
+        })
+        
+        return true
+      } else {
+        return false // All shapes already owned
+      }
+    } catch (error) {
+      console.error('Error in acquireOwnershipForMultiple:', error)
+      return false
+    }
+  }, [user?.id, setOwnedShapes, broadcastShapeChange, handleOwnershipTimeout])
+
   const handleStageClick = useCallback((e) => {
     // Release current ownership when clicking on empty space
     releaseCurrentOwnership()
@@ -369,7 +436,7 @@ export const Canvas = ({ user, onlineUsers, updateActivity }) => {
     }
   }, [shapes, updateShapePosition, broadcastShapeChange])
 
-  const handleShapeSelect = useCallback(async (shapeId) => {
+  const handleShapeSelect = useCallback(async (shapeId, event) => {
     // Track activity for shape selection
     if (updateActivity) {
       updateActivity()
@@ -379,25 +446,47 @@ export const Canvas = ({ user, onlineUsers, updateActivity }) => {
     const shape = objectStore.get(shapeId)
     if (!shape) return
 
-    // Always release current ownership first (single ownership model)
-    await releaseCurrentOwnership()
+    // Check if Shift key is pressed for multi-select
+    const isModifierPressed = event?.shiftKey
 
-    // If shape is unowned, try to acquire ownership
-    if (!shape.owner_id) {
-      const ownershipAcquired = await acquireOwnership(shapeId)
-      if (ownershipAcquired) {
+    // If shape is owned by another user, don't select (no transform handles)
+    if (shape.owner_id && shape.owner_id !== user?.id) {
+      // console.log('Shape is owned by another user, cannot select')
+      return
+    }
+
+    if (isModifierPressed) {
+      // Multi-select mode: toggle selection
+      if (isSelected(shapeId)) {
+        // If already selected, deselect it
+        removeFromSelection(shapeId)
+        // Release ownership if this was the only selected shape
+        if (selectedShapeIds.length === 1) {
+          await releaseCurrentOwnership()
+        }
+      } else {
+        // If not selected, add to selection
+        // For multi-select, we need to acquire ownership of all selected shapes
+        const allSelectedShapes = selectedShapeIds.concat([shapeId])
+        const ownershipAcquired = await acquireOwnershipForMultiple(allSelectedShapes)
+        if (ownershipAcquired) {
+          addToSelection(shapeId)
+        }
+      }
+    } else {
+      // Single select mode: clear current selection and select this shape
+      await releaseCurrentOwnership()
+      
+      if (!shape.owner_id) {
+        const ownershipAcquired = await acquireOwnership(shapeId)
+        if (ownershipAcquired) {
+          selectShape(shapeId)
+        }
+      } else {
         selectShape(shapeId)
       }
-    } 
-    // If shape is owned by current user, just select it
-    else if (shape.owner_id === user?.id) {
-      selectShape(shapeId)
     }
-    // If shape is owned by another user, don't select (no transform handles)
-    else {
-      // console.log('Shape is owned by another user, cannot select')
-    }
-  }, [selectShape, acquireOwnership, releaseCurrentOwnership, user?.id])
+  }, [user?.id, selectShape, addToSelection, removeFromSelection, isSelected, selectedShapeIds, acquireOwnership, releaseCurrentOwnership, updateActivity])
 
   const handleShapeDragEnd = useCallback((shapeId, newPosition) => {
     // Track activity for shape drag end
@@ -533,19 +622,22 @@ export const Canvas = ({ user, onlineUsers, updateActivity }) => {
     }
   }, [selectedShapeId, user?.id])
 
-  // Attach transformer to selected shape
+  // Attach transformer to selected shapes
   useEffect(() => {
-    if (selectedShapeId && transformerRef.current) {
+    if (selectedShapeIds.length > 0 && transformerRef.current) {
       const stage = stageRef.current
       if (stage) {
-        const selectedNode = stage.findOne(`#${selectedShapeId}`)
-        if (selectedNode) {
-          transformerRef.current.nodes([selectedNode])
+        const selectedNodes = selectedShapeIds
+          .map(id => stage.findOne(`#${id}`))
+          .filter(Boolean)
+        
+        if (selectedNodes.length > 0) {
+          transformerRef.current.nodes(selectedNodes)
           transformerRef.current.getLayer().batchDraw()
         }
       }
     }
-  }, [selectedShapeId])
+  }, [selectedShapeIds])
 
   // Periodic cleanup of expired ownership (every 15 seconds)
   useEffect(() => {
@@ -739,7 +831,7 @@ export const Canvas = ({ user, onlineUsers, updateActivity }) => {
         {/* Render all shapes */}
         {shapes.map((shape) => {
           
-          const isSelected = selectedShapeId === shape.id
+          const isSelected = selectedShapeIds.includes(shape.id)
           const isOwnedByMe = shape.owner_id === user?.id
           const isOwnedByOther = shape.owner_id && shape.owner_id !== user?.id
           
@@ -805,7 +897,7 @@ export const Canvas = ({ user, onlineUsers, updateActivity }) => {
         })}
         
         {/* Transformer for selected shapes */}
-        {selectedShapeId && (
+        {selectedShapeIds.length > 0 && (
           <Transformer
             ref={transformerRef}
             boundBoxFunc={(oldBox, newBox) => {

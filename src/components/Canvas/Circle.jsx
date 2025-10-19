@@ -169,7 +169,7 @@ export const Circle = ({
       onTransformEnd={handleTransformEnd}
       onClick={(e) => {
         e.cancelBubble = true
-        onSelect?.(circle.id)
+        onSelect?.(circle.id, e.evt)
       }}
       shadowColor="black"
       shadowBlur={isDragging ? 10 : 5}
