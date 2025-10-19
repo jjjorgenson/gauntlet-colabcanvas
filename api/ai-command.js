@@ -1,7 +1,13 @@
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+// SECURITY: Verify OpenAI API key is loaded
+if (!process.env.OPENAI_API_KEY) {
+  console.error('❌ OPENAI_API_KEY environment variable is not set')
+  process.exit(1)
+}
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 })
 
 export default async function handler(req, res) {
@@ -18,61 +24,166 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-    try {
-      const { command, canvasContext } = req.body
+  try {
+    const { command, canvasContext } = req.body
 
-      if (!command) {
-        return res.status(400).json({ error: 'Command is required' })
+    if (!command) {
+      return res.status(400).json({ error: 'Command is required' })
+    }
+
+    // Define OpenAI functions for canvas operations
+    const functions = [
+      {
+        name: 'createShape',
+        description: 'Create a new shape (rectangle or circle) on the canvas',
+        parameters: {
+          type: 'object',
+          properties: {
+            shape: {
+              type: 'string',
+              enum: ['rectangle', 'circle'],
+              description: 'Type of shape to create'
+            },
+            color: {
+              type: 'string',
+              description: 'Color of the shape in hex format (e.g., #ff0000)'
+            },
+            x: {
+              type: 'number',
+              description: 'X position on canvas (0-5000)'
+            },
+            y: {
+              type: 'number',
+              description: 'Y position on canvas (0-5000)'
+            },
+            width: {
+              type: 'number',
+              description: 'Width of the shape'
+            },
+            height: {
+              type: 'number',
+              description: 'Height of the shape'
+            }
+          },
+          required: ['shape', 'color', 'x', 'y', 'width', 'height']
+        }
+      },
+      {
+        name: 'createText',
+        description: 'Create a text element on the canvas',
+        parameters: {
+          type: 'object',
+          properties: {
+            content: {
+              type: 'string',
+              description: 'Text content to display'
+            },
+            x: {
+              type: 'number',
+              description: 'X position on canvas (0-5000)'
+            },
+            y: {
+              type: 'number',
+              description: 'Y position on canvas (0-5000)'
+            },
+            width: {
+              type: 'number',
+              description: 'Width of the text box'
+            },
+            height: {
+              type: 'number',
+              description: 'Height of the text box'
+            },
+            fontSize: {
+              type: 'number',
+              description: 'Font size in pixels'
+            }
+          },
+          required: ['content', 'x', 'y', 'width', 'height']
+        }
+      },
+      {
+        name: 'moveShape',
+        description: 'Move an existing shape to a new position',
+        parameters: {
+          type: 'object',
+          properties: {
+            shapeId: {
+              type: 'string',
+              description: 'ID of the shape to move'
+            },
+            x: {
+              type: 'number',
+              description: 'New X position'
+            },
+            y: {
+              type: 'number',
+              description: 'New Y position'
+            }
+          },
+          required: ['shapeId', 'x', 'y']
+        }
+      },
+      {
+        name: 'resizeShape',
+        description: 'Resize an existing shape',
+        parameters: {
+          type: 'object',
+          properties: {
+            shapeId: {
+              type: 'string',
+              description: 'ID of the shape to resize'
+            },
+            width: {
+              type: 'number',
+              description: 'New width'
+            },
+            height: {
+              type: 'number',
+              description: 'New height'
+            }
+          },
+          required: ['shapeId', 'width', 'height']
+        }
+      },
+      {
+        name: 'arrangeShapes',
+        description: 'Arrange multiple shapes in a pattern',
+        parameters: {
+          type: 'object',
+          properties: {
+            shapeIds: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Array of shape IDs to arrange'
+            },
+            pattern: {
+              type: 'string',
+              enum: ['horizontal_row', 'vertical_column', 'grid'],
+              description: 'Arrangement pattern'
+            },
+            spacing: {
+              type: 'number',
+              description: 'Spacing between shapes in pixels'
+            }
+          },
+          required: ['shapeIds', 'pattern']
+        }
       }
+    ]
 
-    // Call Claude API with command parsing prompt
-    const response = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 1000,
+    // Call OpenAI with function calling
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4',
       messages: [
         {
-          role: 'user',
-          content: `You are a canvas command parser. Parse the user's command into structured actions.
+          role: 'system',
+          content: `You are a canvas command assistant. Parse user commands and call the appropriate functions to accomplish the task.
 
-Available action types:
-- create_shape: Create new shapes
-- move_shape: Move existing shapes (requires shapeId)
-- resize_shape: Resize existing shapes (requires shapeId)
-- create_text: Create text elements
-- arrange_shapes: Arrange multiple shapes (requires shapeIds array)
-
-Available shapes: rectangle, circle, text
 Available colors: red (#ff0000), blue (#0000ff), green (#00ff00), yellow (#ffff00), purple (#800080), black (#000000), white (#ffffff)
 
 Current canvas context:
 ${canvasContext ? JSON.stringify(canvasContext, null, 2) : 'No canvas context provided'}
-
-Command patterns to handle:
-- "create [color] [shape]" → create_shape action
-- "add [number] [shapes]" → multiple create_shape actions (position them with 50px spacing)
-- "create text saying [content]" → create_text action
-- "move [description] to [position]" → move_shape action (find shape by description, use shapeId)
-- "make [description] bigger/smaller" → resize_shape action (find shape by description, use shapeId)
-- "arrange [shapes] in [pattern]" → arrange_shapes action (use shapeIds array)
-- "create login form" → create multiple elements with proper form layout
-
-SPECIAL LAYOUTS:
-
-Login Form Layout (for "create login form"):
-- Start position: x: 300, y: 200
-- Elements in order:
-  1. Text "Username:" at x: 300, y: 200 (16px font)
-  2. Rectangle input at x: 300, y: 225 (width: 280, height: 40, color: #f3f4f6)
-  3. Text "Password:" at x: 300, y: 285 (16px font)  
-  4. Rectangle input at x: 300, y: 310 (width: 280, height: 40, color: #f3f4f6)
-  5. Rectangle button at x: 300, y: 370 (width: 280, height: 50, color: #3b82f6)
-- Vertical spacing: 20px between elements
-- Input fields: light gray (#f3f4f6), button: blue (#3b82f6)
-
-IMPORTANT: For references like "it", "that", "the one I just made":
-- Look at commandHistory to understand what was created recently
-- Use the most recent shape that matches the description
-- If multiple shapes match, prefer the most recently created one
 
 Position keywords:
 - "center" → x: 2500, y: 2500 (canvas center)
@@ -84,158 +195,161 @@ Position keywords:
 Default positions: x: 0, y: 0 (top-left corner for visibility)
 Default sizes: width: 300, height: 300 (large for debugging)
 
-User command: "${command}"
+For references like "it", "that", "the one I just made":
+- Look at commandHistory to understand what was created recently
+- Use the most recent shape that matches the description
+- If multiple shapes match, prefer the most recently created one
 
-Respond with ONLY valid JSON in this exact format:
+Special commands:
+- "create login form" → Create a complete login form with username/password fields and button
+- "add 3 blue circles" → Create multiple shapes with spacing
 
-For shapes (rectangle, circle):
-{
-  "actions": [
-    {
-      "type": "create_shape",
-      "shape": "circle",
-      "color": "#ff0000",
-      "x": 0,
-      "y": 0,
-      "width": 300,
-      "height": 300
-    }
-  ]
-}
-
-For text:
-{
-  "actions": [
-    {
-      "type": "create_text",
-      "content": "Hello World",
-      "x": 0,
-      "y": 0,
-      "width": 300,
-      "height": 300
-    }
-  ]
-}
-
-For moving shapes:
-{
-  "actions": [
-    {
-      "type": "move_shape",
-      "shapeId": "uuid-of-shape",
-      "x": 2500,
-      "y": 2500
-    }
-  ]
-}
-
-For resizing shapes:
-{
-  "actions": [
-    {
-      "type": "resize_shape",
-      "shapeId": "uuid-of-shape",
-      "width": 400,
-      "height": 400
-    }
-  ]
-}
-
-For arranging shapes:
-{
-  "actions": [
-    {
-      "type": "arrange_shapes",
-      "shapeIds": ["uuid1", "uuid2", "uuid3"],
-      "pattern": "horizontal_row",
-      "spacing": 50
-    }
-  ]
-}
-
-For login form (create login form):
-{
-  "actions": [
-    {
-      "type": "create_text",
-      "content": "Username:",
-      "x": 300,
-      "y": 200,
-      "width": 100,
-      "height": 20,
-      "font_size": 16
-    },
-    {
-      "type": "create_shape",
-      "shape": "rectangle",
-      "color": "#f3f4f6",
-      "x": 300,
-      "y": 225,
-      "width": 280,
-      "height": 40
-    },
-    {
-      "type": "create_text",
-      "content": "Password:",
-      "x": 300,
-      "y": 285,
-      "width": 100,
-      "height": 20,
-      "font_size": 16
-    },
-    {
-      "type": "create_shape",
-      "shape": "rectangle",
-      "color": "#f3f4f6",
-      "x": 300,
-      "y": 310,
-      "width": 280,
-      "height": 40
-    },
-    {
-      "type": "create_shape",
-      "shape": "rectangle",
-      "color": "#3b82f6",
-      "x": 300,
-      "y": 370,
-      "width": 280,
-      "height": 50
-    }
-  ]
-}
-
-If command is unclear, return: {"actions": []}`
+Always call the appropriate functions to accomplish the user's request.`
+        },
+        {
+          role: 'user',
+          content: command
         }
-      ]
+      ],
+      functions: functions,
+      function_call: 'auto',
+      temperature: 0.1
     })
 
-    const claudeResponse = response.content[0]
-    if (claudeResponse.type !== 'text') {
-      throw new Error('Unexpected response type from Claude')
+    const message = response.choices[0].message
+    const actions = []
+
+    // Process function calls
+    if (message.function_call) {
+      const functionName = message.function_call.name
+      const functionArgs = JSON.parse(message.function_call.arguments)
+
+      // Convert function calls to action format expected by frontend
+      switch (functionName) {
+        case 'createShape':
+          actions.push({
+            type: 'create_shape',
+            shape: functionArgs.shape,
+            color: functionArgs.color,
+            x: functionArgs.x,
+            y: functionArgs.y,
+            width: functionArgs.width,
+            height: functionArgs.height
+          })
+          break
+
+        case 'createText':
+          actions.push({
+            type: 'create_text',
+            content: functionArgs.content,
+            x: functionArgs.x,
+            y: functionArgs.y,
+            width: functionArgs.width,
+            height: functionArgs.height,
+            font_size: functionArgs.fontSize || 16
+          })
+          break
+
+        case 'moveShape':
+          actions.push({
+            type: 'move_shape',
+            shapeId: functionArgs.shapeId,
+            x: functionArgs.x,
+            y: functionArgs.y
+          })
+          break
+
+        case 'resizeShape':
+          actions.push({
+            type: 'resize_shape',
+            shapeId: functionArgs.shapeId,
+            width: functionArgs.width,
+            height: functionArgs.height
+          })
+          break
+
+        case 'arrangeShapes':
+          actions.push({
+            type: 'arrange_shapes',
+            shapeIds: functionArgs.shapeIds,
+            pattern: functionArgs.pattern,
+            spacing: functionArgs.spacing || 50
+          })
+          break
+      }
     }
 
-    // Parse the JSON response
-    let parsedResponse
-    try {
-      parsedResponse = JSON.parse(claudeResponse.text)
-    } catch (parseError) {
-      console.error('Failed to parse Claude response:', claudeResponse.text)
-      return res.status(500).json({ 
-        error: 'Failed to parse AI response',
-        rawResponse: claudeResponse.text
-      })
+    // Handle multiple function calls (for complex commands)
+    if (message.tool_calls) {
+      for (const toolCall of message.tool_calls) {
+        const functionName = toolCall.function.name
+        const functionArgs = JSON.parse(toolCall.function.arguments)
+
+        switch (functionName) {
+          case 'createShape':
+            actions.push({
+              type: 'create_shape',
+              shape: functionArgs.shape,
+              color: functionArgs.color,
+              x: functionArgs.x,
+              y: functionArgs.y,
+              width: functionArgs.width,
+              height: functionArgs.height
+            })
+            break
+
+          case 'createText':
+            actions.push({
+              type: 'create_text',
+              content: functionArgs.content,
+              x: functionArgs.x,
+              y: functionArgs.y,
+              width: functionArgs.width,
+              height: functionArgs.height,
+              font_size: functionArgs.fontSize || 16
+            })
+            break
+
+          case 'moveShape':
+            actions.push({
+              type: 'move_shape',
+              shapeId: functionArgs.shapeId,
+              x: functionArgs.x,
+              y: functionArgs.y
+            })
+            break
+
+          case 'resizeShape':
+            actions.push({
+              type: 'resize_shape',
+              shapeId: functionArgs.shapeId,
+              width: functionArgs.width,
+              height: functionArgs.height
+            })
+            break
+
+          case 'arrangeShapes':
+            actions.push({
+              type: 'arrange_shapes',
+              shapeIds: functionArgs.shapeIds,
+              pattern: functionArgs.pattern,
+              spacing: functionArgs.spacing || 50
+            })
+            break
+        }
+      }
     }
 
     return res.status(200).json({ 
-      actions: parsedResponse.actions || [],
+      actions: actions,
       command: command,
       timestamp: new Date().toISOString()
     })
 
   } catch (error) {
-    console.error('Claude API error:', error)
+    console.error('OpenAI API error:', error)
     return res.status(500).json({ 
-      error: 'Failed to process command with Claude',
+      error: 'Failed to process command with OpenAI',
       details: error.message
     })
   }
