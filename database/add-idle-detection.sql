@@ -13,21 +13,35 @@ UPDATE presence
 SET last_activity = last_seen 
 WHERE last_activity IS NULL;
 
--- Create a function to clean up idle users
+-- Drop existing function first (in case it has different signature)
+DROP FUNCTION IF EXISTS cleanup_idle_users() CASCADE;
+
+-- Create a simple function to clean up idle users (with elevated privileges)
 CREATE OR REPLACE FUNCTION cleanup_idle_users()
-RETURNS void AS $$
+RETURNS INTEGER AS $$
+DECLARE
+  deactivated_count INTEGER;
 BEGIN
   -- Mark users as inactive if they haven't been active for 10 minutes
-  UPDATE presence 
-  SET active = false, 
-      last_seen = NOW()
-  WHERE active = true 
-    AND last_activity < NOW() - INTERVAL '10 minutes';
-    
+  WITH updated_users AS (
+    UPDATE presence 
+    SET active = false, 
+        last_seen = NOW()
+    WHERE active = true 
+      AND last_activity < NOW() - INTERVAL '10 minutes'
+    RETURNING user_id
+  )
+  SELECT COUNT(*) INTO deactivated_count FROM updated_users;
+  
   -- Log cleanup activity
-  RAISE NOTICE 'Cleaned up idle users at %', NOW();
+  RAISE NOTICE 'Cleaned up % idle users at %', deactivated_count, NOW();
+  
+  RETURN deactivated_count;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION cleanup_idle_users() TO authenticated;
 
 -- Create a function to get idle users (5+ minutes inactive)
 CREATE OR REPLACE FUNCTION get_idle_users()

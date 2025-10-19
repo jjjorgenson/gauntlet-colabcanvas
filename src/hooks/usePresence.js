@@ -111,53 +111,101 @@ export const usePresence = ({ userId, username }) => {
       const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000)
       const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000)
 
+      console.log('🔍 IDLE CHECK - Current time:', now.toISOString())
+      console.log('🔍 IDLE CHECK - 5 minutes ago:', fiveMinutesAgo.toISOString())
+      console.log('🔍 IDLE CHECK - 10 minutes ago:', tenMinutesAgo.toISOString())
+
       // Get all active users
       const { data: activeUsers, error: fetchError } = await supabase
         .from(TABLES.PRESENCE)
-        .select('user_id, last_activity, active')
+        .select('user_id, last_activity, active, last_seen')
         .eq('active', true)
 
       if (fetchError) {
-        console.error('Error fetching users for idle check:', fetchError)
+        console.error('❌ Error fetching users for idle check:', fetchError)
         return
       }
+
+      console.log('🔍 IDLE CHECK - Found active users:', activeUsers?.length || 0)
+      console.log('🔍 IDLE CHECK - Active users data:', activeUsers)
 
       const newIdleUsers = new Set()
       const usersToDeactivate = []
 
       activeUsers?.forEach(user => {
+        // Check if last_activity column exists and has data
+        if (!user.last_activity) {
+          console.warn(`⚠️ USER ${user.user_id} has no last_activity - using last_seen instead`)
+          user.last_activity = user.last_seen
+        }
+        
         const lastActivity = new Date(user.last_activity)
+        const timeSinceActivity = now.getTime() - lastActivity.getTime()
+        const minutesSinceActivity = Math.floor(timeSinceActivity / (1000 * 60))
+        
+        console.log(`🔍 USER ${user.user_id}:`, {
+          lastActivity: lastActivity.toISOString(),
+          lastSeen: user.last_seen,
+          minutesSinceActivity,
+          isIdle: lastActivity < fiveMinutesAgo,
+          shouldDeactivate: lastActivity < tenMinutesAgo,
+          hasLastActivity: !!user.last_activity
+        })
         
         if (lastActivity < tenMinutesAgo) {
           // User has been inactive for 10+ minutes - mark as inactive
+          console.log(`🚫 DEACTIVATING USER ${user.user_id} - inactive for ${minutesSinceActivity} minutes`)
           usersToDeactivate.push(user.user_id)
         } else if (lastActivity < fiveMinutesAgo) {
           // User has been inactive for 5+ minutes - mark as idle
+          console.log(`⏰ MARKING USER ${user.user_id} AS IDLE - inactive for ${minutesSinceActivity} minutes`)
           newIdleUsers.add(user.user_id)
         }
       })
 
       // Update idle users set
       setIdleUsers(newIdleUsers)
+      console.log('🔍 IDLE CHECK - New idle users:', Array.from(newIdleUsers))
+      console.log('🔍 IDLE CHECK - Users to deactivate:', usersToDeactivate)
 
       // Deactivate users who have been inactive for 10+ minutes
       if (usersToDeactivate.length > 0) {
-        const { error: deactivateError } = await supabase
-          .from(TABLES.PRESENCE)
-          .update({ 
-            active: false, 
-            last_seen: now.toISOString() 
-          })
-          .in('user_id', usersToDeactivate)
+        console.log(`🗑️ DEACTIVATING ${usersToDeactivate.length} users...`)
+        console.log(`🗑️ USER IDs TO DEACTIVATE:`, usersToDeactivate)
+        
+        // Use the database function to clean up idle users (bypasses RLS)
+        console.log(`🗑️ Calling cleanup_idle_users() function...`)
+        
+        const { data: cleanupResult, error: deactivateError } = await supabase
+          .rpc('cleanup_idle_users')
+        
+        console.log(`🗑️ Cleanup function result:`, { data: cleanupResult, error: deactivateError })
+        
+        // Handle integer response from function
+        const successCount = cleanupResult || 0
+        const updateData = { deactivated_count: successCount, deactivated_users: [] }
+
+        console.log(`🗑️ UPDATE RESULT:`, { data: updateData, error: deactivateError })
 
         if (deactivateError) {
-          console.error('Error deactivating idle users:', deactivateError)
+          console.error('❌ Error deactivating idle users:', deactivateError)
+          console.error('❌ Error details:', {
+            message: deactivateError.message,
+            details: deactivateError.details,
+            hint: deactivateError.hint,
+            code: deactivateError.code
+          })
         } else {
-          console.log(`Deactivated ${usersToDeactivate.length} idle users`)
+          console.log(`✅ Successfully deactivated ${updateData?.length || 0} idle users`)
+          console.log(`✅ Updated records:`, updateData)
+          // Force refresh the user list to reflect the changes
+          loadOnlineUsers()
         }
+      } else {
+        console.log('🔍 IDLE CHECK - No users to deactivate')
       }
     } catch (error) {
-      console.error('Error in checkIdleUsers:', error)
+      console.error('❌ Error in checkIdleUsers:', error)
     }
   }, [])
 
@@ -194,6 +242,17 @@ export const usePresence = ({ userId, username }) => {
           color: getUserColor(user.user_id),
           isIdle: isIdle
         }
+      })
+
+      console.log('👥 LOADED ONLINE USERS:', {
+        count: usersWithColors.length,
+        users: usersWithColors.map(u => ({
+          id: u.user_id,
+          username: u.username,
+          active: u.active,
+          isIdle: u.isIdle,
+          lastActivity: u.last_activity
+        }))
       })
 
       setOnlineUsers(usersWithColors)
@@ -249,7 +308,12 @@ export const usePresence = ({ userId, username }) => {
           table: TABLES.PRESENCE,
         },
         (payload) => {
-          // console.log('Presence change:', payload)
+          console.log('🔄 PRESENCE CHANGE DETECTED:', {
+            event: payload.eventType,
+            table: payload.table,
+            new: payload.new,
+            old: payload.old
+          })
           
           // Reload online users when presence changes (throttled to prevent spam)
           throttledLoadOnlineUsers()
@@ -268,6 +332,9 @@ export const usePresence = ({ userId, username }) => {
     idleCheckIntervalRef.current = setInterval(() => {
       checkIdleUsers()
     }, 60000) // Check every minute
+
+    // Also run an immediate check for testing
+    checkIdleUsers()
 
     return () => {
       if (subscriptionRef.current) {
