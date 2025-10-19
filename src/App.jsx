@@ -17,10 +17,10 @@ const AppContent = () => {
 
   // Handle AI command results
   const handleAICommandResult = useCallback((result) => {
-    console.log('AI Command executed:', result)
+    console.log('🎯 AI Command executed:', result)
     
     if (result.actions && result.actions.length > 0) {
-      console.log('Processing actions:', result.actions)
+      console.log('🔧 Processing actions:', result.actions)
       
       result.actions.forEach((action, index) => {
         console.log(`Action ${index + 1}:`, action)
@@ -42,7 +42,7 @@ const AppContent = () => {
           font_size: 16
         }
         
-        console.log('Created shape data:', shapeData)
+        console.log('🎨 Created shape data:', shapeData)
         
         // TODO: Insert into database and add to canvas
         // This will be implemented in the next step

@@ -9,7 +9,7 @@ export const AICommandBar = ({ onCommandResult }) => {
   const inputRef = useRef(null)
 
   // Console.log when component renders
-  console.log('AICommandBar rendered, isVisible:', isVisible)
+  console.log('🤖 AICommandBar rendered, isVisible:', isVisible)
 
   // Handle Ctrl+K shortcut (Windows)
   useEffect(() => {
@@ -17,7 +17,7 @@ export const AICommandBar = ({ onCommandResult }) => {
       if (e.ctrlKey && e.key === 'k') {
         e.preventDefault()
         e.stopPropagation()
-        console.log('Ctrl+K pressed, opening AI Command Bar')
+        console.log('⌨️ Ctrl+K pressed, opening AI Command Bar')
         setIsVisible(true)
         setTimeout(() => inputRef.current?.focus(), 100)
       }
@@ -43,7 +43,7 @@ export const AICommandBar = ({ onCommandResult }) => {
     e.preventDefault()
     if (!command.trim() || isLoading) return
 
-    console.log('Submitting command:', command)
+    console.log('🚀 Submitting command:', command)
     setIsLoading(true)
     setError(null)
 
@@ -61,14 +61,14 @@ export const AICommandBar = ({ onCommandResult }) => {
       }
 
       const result = await response.json()
-      console.log('AI Command Result:', result)
+      console.log('✅ AI Command Result:', result)
       
       // Execute the actions on the canvas
       if (result.actions && result.actions.length > 0) {
-        console.log('Executing actions:', result.actions)
+        console.log('⚡ Executing actions:', result.actions)
         onCommandResult?.(result)
       } else {
-        console.log('No actions to execute')
+        console.log('❌ No actions to execute')
       }
       
       setCommand('')
