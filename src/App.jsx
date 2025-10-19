@@ -4,6 +4,7 @@ import { LoginForm } from './components/Auth/LoginForm'
 import { Canvas } from './components/Canvas/Canvas'
 import { UsersList } from './components/Presence/UsersList'
 import { AICommandBar } from './components/AI/AICommandBar'
+import { SettingsDropdown } from './components/Settings/SettingsDropdown'
 import { usePresence } from './hooks/usePresence'
 import { supabase } from './lib/supabase'
 import { TABLES } from './lib/constants'
@@ -416,12 +417,12 @@ const AppContent = () => {
           >
             🤖 AI (Ctrl+K)
           </button>
-          <button 
-            onClick={logout}
-            className="logout-button"
-          >
-            Logout
-          </button>
+          <SettingsDropdown 
+            user={user}
+            username={username}
+            email={user?.email}
+            onClose={logout}
+          />
         </div>
       </div>
       

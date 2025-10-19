@@ -1,16 +1,72 @@
+/* Theme CSS Variables */
+:root {
+  /* Light Theme (Default) */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --border-primary: #e2e8f0;
+  --border-secondary: #d1d5db;
+  --shadow-primary: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-secondary: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-secondary: #ef4444;
+  --accent-secondary-hover: #dc2626;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #1f2937;
+  --bg-secondary: #374151;
+  --bg-tertiary: #4b5563;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --border-primary: #4b5563;
+  --border-secondary: #6b7280;
+  --shadow-primary: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-secondary: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-secondary: #ef4444;
+  --accent-secondary-hover: #dc2626;
+}
+
+[data-theme="darker"] {
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-tertiary: #374151;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e7eb;
+  --text-tertiary: #9ca3af;
+  --border-primary: #374151;
+  --border-secondary: #4b5563;
+  --shadow-primary: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-secondary: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --accent-primary: #60a5fa;
+  --accent-hover: #3b82f6;
+  --accent-secondary: #f87171;
+  --accent-secondary-hover: #ef4444;
+}
+
 /* App Layout */
 .app {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f8fafc;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .app-header {
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
   padding: 0 1rem;
   z-index: 10;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .header-content {
@@ -22,13 +78,13 @@
 
 .header-content h3 {
   margin: 0;
-  color: #1f2937;
+  color: var(--text-primary);
   font-size: 1.5rem;
   font-weight: 600;
 }
 
 .header-content .username {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -74,15 +130,17 @@
 .canvas-wrapper {
   flex: 1;
   position: relative;
-  background: #ffffff;
+  background: var(--bg-secondary);
+  transition: background-color 0.3s ease;
 }
 
 .sidebar {
   width: 300px;
-  background: white;
-  border-left: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-primary);
   padding: 1rem;
   overflow-y: auto;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Loading States */
@@ -196,10 +254,12 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: white;
+  background: var(--bg-secondary);
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-primary);
+  border: 1px solid var(--border-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .shape-buttons {
@@ -465,4 +525,180 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Settings Dropdown */
+.settings-container {
+  position: relative;
+  display: inline-block;
+}
+
+.settings-button {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-secondary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  margin-right: 10px;
+}
+
+.settings-button:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+  transform: translateY(-1px);
+}
+
+.settings-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  box-shadow: var(--shadow-primary);
+  min-width: 280px;
+  z-index: 1000;
+  animation: slideUp 0.2s ease-out;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.settings-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.settings-content {
+  padding: 20px;
+}
+
+.user-info {
+  margin-bottom: 24px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.info-item label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.info-item span {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.theme-section {
+  margin-bottom: 24px;
+}
+
+.section-label {
+  display: block;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.theme-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-option:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-primary);
+}
+
+.theme-option input[type="radio"] {
+  margin-right: 12px;
+  accent-color: var(--accent-primary);
+}
+
+.theme-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.theme-label {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.theme-description {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.settings-footer {
+  border-top: 1px solid var(--border-primary);
+  padding-top: 16px;
+}
+
+.settings-footer .logout-button {
+  width: 100%;
+  background: var(--accent-secondary);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.settings-footer .logout-button:hover:not(:disabled) {
+  background: var(--accent-secondary-hover);
+}
+
+.settings-footer .logout-button:disabled {
+  background: var(--text-tertiary);
+  cursor: not-allowed;
 }
