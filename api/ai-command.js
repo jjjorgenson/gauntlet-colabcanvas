@@ -179,15 +179,22 @@ export default async function handler(req, res) {
       }
     ]
 
-    console.log('🤖 CALLING OPENAI API...')
-    
-    // Call OpenAI with function calling
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a canvas command assistant. Parse user commands and call the appropriate functions to accomplish the task.
+     console.log('🤖 CALLING OPENAI API...')
+     console.log('📋 AVAILABLE FUNCTIONS:', functions.map(f => ({
+       name: f.name,
+       description: f.description,
+       requiredParams: f.parameters.required
+     })))
+     
+     // Call OpenAI with function calling
+     const response = await openai.chat.completions.create({
+       model: 'gpt-4',
+       messages: [
+         {
+           role: 'system',
+           content: `You are a canvas command assistant. Parse user commands and call the appropriate functions to accomplish the task.
+
+CRITICAL: For complex commands, you MUST make MULTIPLE function calls in sequence to create all required elements.
 
 Available colors: red (#ff0000), blue (#0000ff), green (#00ff00), yellow (#ffff00), purple (#800080), black (#000000), white (#ffffff)
 
@@ -209,28 +216,39 @@ For references like "it", "that", "the one I just made":
 - Use the most recent shape that matches the description
 - If multiple shapes match, prefer the most recently created one
 
-Special commands:
-- "create login form" → Create a complete login form with username/password fields and button
-- "add 3 blue circles" → Create multiple shapes with spacing
+COMPLEX COMMAND EXAMPLES:
+- "create login form" → Call createText for "Username:" label, createShape for username input, createText for "Password:" label, createShape for password input, createShape for button
+- "add 3 blue circles" → Call createShape 3 times with different positions
+- "create navigation bar" → Call createShape for background, createText for each menu item
 
-Always call the appropriate functions to accomplish the user's request.`
-        },
-        {
-          role: 'user',
-          content: command
-        }
-      ],
-      functions: functions,
-      function_call: 'auto',
-      temperature: 0.1
-    })
+LAYOUT GUIDELINES:
+- Username label: x: 300, y: 200, width: 100, height: 20, font_size: 16
+- Username input: x: 300, y: 225, width: 280, height: 40, color: #f3f4f6
+- Password label: x: 300, y: 285, width: 100, height: 20, font_size: 16  
+- Password input: x: 300, y: 310, width: 280, height: 40, color: #f3f4f6
+- Login button: x: 300, y: 370, width: 280, height: 50, color: #3b82f6
 
-    console.log('✅ OPENAI RESPONSE RECEIVED:', {
-      hasMessage: !!response.choices[0]?.message,
-      hasFunctionCall: !!response.choices[0]?.message?.function_call,
-      hasToolCalls: !!response.choices[0]?.message?.tool_calls,
-      toolCallsCount: response.choices[0]?.message?.tool_calls?.length || 0
-    })
+You MUST call multiple functions for complex commands. Do not try to create everything in one function call.`
+         },
+         {
+           role: 'user',
+           content: command
+         }
+       ],
+       functions: functions,
+       function_call: 'auto',
+       temperature: 0.1,
+       max_tokens: 4000
+     })
+
+     console.log('✅ OPENAI RESPONSE RECEIVED:', {
+       hasMessage: !!response.choices[0]?.message,
+       hasFunctionCall: !!response.choices[0]?.message?.function_call,
+       hasToolCalls: !!response.choices[0]?.message?.tool_calls,
+       toolCallsCount: response.choices[0]?.message?.tool_calls?.length || 0,
+       functionCallName: response.choices[0]?.message?.function_call?.name,
+       toolCallNames: response.choices[0]?.message?.tool_calls?.map(tc => tc.function.name)
+     })
 
     const message = response.choices[0].message
     const actions = []
