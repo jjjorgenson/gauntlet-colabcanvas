@@ -194,7 +194,7 @@ export default async function handler(req, res) {
           role: 'system',
           content: `You are a canvas command assistant. Parse user commands and call the appropriate functions to accomplish the task.
 
-CRITICAL: For complex commands, you MUST make MULTIPLE function calls in sequence to create all required elements.
+CRITICAL: For complex commands, you MUST make MULTIPLE function calls in sequence to create all required elements. Use the tools array to call multiple functions in one response.
 
 Available colors: red (#ff0000), blue (#0000ff), green (#00ff00), yellow (#ffff00), purple (#800080), black (#000000), white (#ffffff)
 
@@ -217,9 +217,16 @@ For references like "it", "that", "the one I just made":
 - If multiple shapes match, prefer the most recently created one
 
 COMPLEX COMMAND EXAMPLES:
-- "create login form" → Call createText for "Username:" label, createShape for username input, createText for "Password:" label, createShape for password input, createShape for button
+- "create login form" → MUST call 5 functions: createText("Username:"), createShape(username input), createText("Password:"), createShape(password input), createShape(button)
 - "add 3 blue circles" → Call createShape 3 times with different positions
 - "create navigation bar" → Call createShape for background, createText for each menu item
+
+EXAMPLE: For "create login form", you should make exactly 5 tool calls:
+1. createText with content="Username:", x=300, y=200
+2. createShape with shape="rectangle", x=300, y=225, color="#f3f4f6"
+3. createText with content="Password:", x=300, y=285
+4. createShape with shape="rectangle", x=300, y=310, color="#f3f4f6"
+5. createShape with shape="rectangle", x=300, y=370, color="#3b82f6"
 
 LAYOUT GUIDELINES:
 - Username label: x: 300, y: 200, width: 100, height: 20, font_size: 16
@@ -235,8 +242,11 @@ You MUST call multiple functions for complex commands. Do not try to create ever
           content: command
         }
       ],
-      functions: functions,
-      function_call: 'auto',
+      tools: functions.map(func => ({
+        type: 'function',
+        function: func
+      })),
+      tool_choice: 'auto',
       temperature: 0.1,
       max_tokens: 4000
     })
@@ -247,7 +257,8 @@ You MUST call multiple functions for complex commands. Do not try to create ever
       hasToolCalls: !!response.choices[0]?.message?.tool_calls,
       toolCallsCount: response.choices[0]?.message?.tool_calls?.length || 0,
       functionCallName: response.choices[0]?.message?.function_call?.name,
-      toolCallNames: response.choices[0]?.message?.tool_calls?.map(tc => tc.function.name)
+      toolCallNames: response.choices[0]?.message?.tool_calls?.map(tc => tc.function.name),
+      toolCallTypes: response.choices[0]?.message?.tool_calls?.map(tc => tc.type)
     })
 
     const message = response.choices[0].message
