@@ -57,12 +57,28 @@ Default sizes: width: 300, height: 300 (large for debugging)
 User command: "${command}"
 
 Respond with ONLY valid JSON in this exact format:
+
+For shapes (rectangle, circle):
 {
   "actions": [
     {
       "type": "create_shape",
       "shape": "circle",
       "color": "#ff0000",
+      "x": 0,
+      "y": 0,
+      "width": 300,
+      "height": 300
+    }
+  ]
+}
+
+For text:
+{
+  "actions": [
+    {
+      "type": "create_text",
+      "content": "Hello World",
       "x": 0,
       "y": 0,
       "width": 300,

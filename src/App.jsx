@@ -60,10 +60,22 @@ const AppContent = () => {
         const action = result.actions[index]
         console.log(`Action ${index + 1}:`, action)
         
+        // Map AI action types to database types
+        const mapActionTypeToDbType = (actionType) => {
+          switch (actionType) {
+            case 'create_shape':
+              return action.shape || 'rectangle' // Use the shape field (circle, rectangle, text)
+            case 'create_text':
+              return 'text'
+            default:
+              return actionType
+          }
+        }
+
         // Create shape data with BRIGHT colors and LARGE size for debugging
         const shapeData = {
           id: generateId(), // Generate proper UUID
-          type: action.shape || action.type,
+          type: mapActionTypeToDbType(action.type), // Map to correct database type
           x: action.x || 0, // Use 0,0 for visibility
           y: action.y || 0,
           width: 300, // LARGE size for debugging
@@ -73,7 +85,7 @@ const AppContent = () => {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           created_by: user?.id,
-          text_content: action.text_content || null,
+          text_content: action.content || action.text_content || null, // Handle both content and text_content
           font_size: 16
         }
         
