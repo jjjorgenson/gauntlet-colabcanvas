@@ -18,8 +18,37 @@ const AppContent = () => {
   // Handle AI command results
   const handleAICommandResult = useCallback((result) => {
     console.log('AI Command executed:', result)
-    // TODO: Execute actions on canvas
-  }, [])
+    
+    if (result.actions && result.actions.length > 0) {
+      console.log('Processing actions:', result.actions)
+      
+      result.actions.forEach((action, index) => {
+        console.log(`Action ${index + 1}:`, action)
+        
+        // Create shape data with BRIGHT colors and LARGE size for debugging
+        const shapeData = {
+          id: `ai-${Date.now()}-${index}`, // Temporary ID
+          type: action.shape || action.type,
+          x: action.x || 0, // Use 0,0 for visibility
+          y: action.y || 0,
+          width: 300, // LARGE size for debugging
+          height: 300,
+          color: action.color || '#ff0000', // BRIGHT RED for debugging
+          rotation: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          created_by: user?.id,
+          text_content: action.text_content || null,
+          font_size: 16
+        }
+        
+        console.log('Created shape data:', shapeData)
+        
+        // TODO: Insert into database and add to canvas
+        // This will be implemented in the next step
+      })
+    }
+  }, [user?.id])
 
   if (loading) {
     return (

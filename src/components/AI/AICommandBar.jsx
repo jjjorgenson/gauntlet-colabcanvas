@@ -63,7 +63,14 @@ export const AICommandBar = ({ onCommandResult }) => {
       const result = await response.json()
       console.log('AI Command Result:', result)
       
-      onCommandResult?.(result)
+      // Execute the actions on the canvas
+      if (result.actions && result.actions.length > 0) {
+        console.log('Executing actions:', result.actions)
+        onCommandResult?.(result)
+      } else {
+        console.log('No actions to execute')
+      }
+      
       setCommand('')
       setIsVisible(false)
 

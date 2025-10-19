@@ -51,8 +51,8 @@ Command patterns to handle:
 - "move [shape] to [position]" → move_shape action
 - "resize [shape] to [size]" → resize_shape action
 
-Default positions: x: 200, y: 200
-Default sizes: width: 100, height: 100
+Default positions: x: 0, y: 0 (top-left corner for visibility)
+Default sizes: width: 300, height: 300 (large for debugging)
 
 User command: "${command}"
 
@@ -63,10 +63,10 @@ Respond with ONLY valid JSON in this exact format:
       "type": "create_shape",
       "shape": "circle",
       "color": "#ff0000",
-      "x": 200,
-      "y": 200,
-      "width": 100,
-      "height": 100
+      "x": 0,
+      "y": 0,
+      "width": 300,
+      "height": 300
     }
   ]
 }
