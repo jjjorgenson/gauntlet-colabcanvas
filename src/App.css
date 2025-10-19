@@ -134,6 +134,12 @@
   transition: background-color 0.3s ease;
 }
 
+/* Canvas background should match theme */
+.canvas-container {
+  background: var(--bg-secondary);
+  transition: background-color 0.3s ease;
+}
+
 .sidebar {
   width: 300px;
   background: var(--bg-secondary);
@@ -674,31 +680,4 @@
 .theme-description {
   color: var(--text-secondary);
   font-size: 0.8rem;
-}
-
-.settings-footer {
-  border-top: 1px solid var(--border-primary);
-  padding-top: 16px;
-}
-
-.settings-footer .logout-button {
-  width: 100%;
-  background: var(--accent-secondary);
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.settings-footer .logout-button:hover:not(:disabled) {
-  background: var(--accent-secondary-hover);
-}
-
-.settings-footer .logout-button:disabled {
-  background: var(--text-tertiary);
-  cursor: not-allowed;
 }

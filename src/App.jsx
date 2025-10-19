@@ -421,8 +421,14 @@ const AppContent = () => {
             user={user}
             username={username}
             email={user?.email}
-            onClose={logout}
+            onClose={() => {}} // Don't auto-logout when closing settings
           />
+          <button 
+            onClick={logout}
+            className="logout-button"
+          >
+            Logout
+          </button>
         </div>
       </div>
       

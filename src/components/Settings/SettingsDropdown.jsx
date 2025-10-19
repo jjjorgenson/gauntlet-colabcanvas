@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { TABLES } from '../../lib/constants'
 
-export const SettingsDropdown = ({ user, username, email, onClose }) => {
+export const SettingsDropdown = ({ user, username, email }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [theme, setTheme] = useState('light')
   const [isLoading, setIsLoading] = useState(false)
@@ -88,14 +88,6 @@ export const SettingsDropdown = ({ user, username, email, onClose }) => {
     saveTheme(newTheme)
   }
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut()
-      onClose?.()
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
 
   return (
     <div className="settings-container" ref={dropdownRef}>
@@ -162,16 +154,6 @@ export const SettingsDropdown = ({ user, username, email, onClose }) => {
               </div>
             </div>
 
-            {/* Logout Button */}
-            <div className="settings-footer">
-              <button 
-                onClick={handleLogout}
-                className="logout-button"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Loading...' : 'Logout'}
-              </button>
-            </div>
           </div>
         </div>
       )}
