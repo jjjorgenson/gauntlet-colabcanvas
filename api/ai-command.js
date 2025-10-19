@@ -54,6 +54,20 @@ Command patterns to handle:
 - "move [description] to [position]" → move_shape action (find shape by description, use shapeId)
 - "make [description] bigger/smaller" → resize_shape action (find shape by description, use shapeId)
 - "arrange [shapes] in [pattern]" → arrange_shapes action (use shapeIds array)
+- "create login form" → create multiple elements with proper form layout
+
+SPECIAL LAYOUTS:
+
+Login Form Layout (for "create login form"):
+- Start position: x: 300, y: 200
+- Elements in order:
+  1. Text "Username:" at x: 300, y: 200 (16px font)
+  2. Rectangle input at x: 300, y: 225 (width: 280, height: 40, color: #f3f4f6)
+  3. Text "Password:" at x: 300, y: 285 (16px font)  
+  4. Rectangle input at x: 300, y: 310 (width: 280, height: 40, color: #f3f4f6)
+  5. Rectangle button at x: 300, y: 370 (width: 280, height: 50, color: #3b82f6)
+- Vertical spacing: 20px between elements
+- Input fields: light gray (#f3f4f6), button: blue (#3b82f6)
 
 IMPORTANT: For references like "it", "that", "the one I just made":
 - Look at commandHistory to understand what was created recently
@@ -135,6 +149,57 @@ For arranging shapes:
       "shapeIds": ["uuid1", "uuid2", "uuid3"],
       "pattern": "horizontal_row",
       "spacing": 50
+    }
+  ]
+}
+
+For login form (create login form):
+{
+  "actions": [
+    {
+      "type": "create_text",
+      "content": "Username:",
+      "x": 300,
+      "y": 200,
+      "width": 100,
+      "height": 20,
+      "font_size": 16
+    },
+    {
+      "type": "create_shape",
+      "shape": "rectangle",
+      "color": "#f3f4f6",
+      "x": 300,
+      "y": 225,
+      "width": 280,
+      "height": 40
+    },
+    {
+      "type": "create_text",
+      "content": "Password:",
+      "x": 300,
+      "y": 285,
+      "width": 100,
+      "height": 20,
+      "font_size": 16
+    },
+    {
+      "type": "create_shape",
+      "shape": "rectangle",
+      "color": "#f3f4f6",
+      "x": 300,
+      "y": 310,
+      "width": 280,
+      "height": 40
+    },
+    {
+      "type": "create_shape",
+      "shape": "rectangle",
+      "color": "#3b82f6",
+      "x": 300,
+      "y": 370,
+      "width": 280,
+      "height": 50
     }
   ]
 }
