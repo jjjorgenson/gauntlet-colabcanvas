@@ -34,6 +34,7 @@ export const useCursors = ({ userId, username, isDragging = false, updateActivit
   const lastUpdateRef = useRef(0)
   const cursorChannelRef = useRef(null)
   const lastPresenceUpdateRef = useRef(0)
+  const lastActivityUpdateRef = useRef(0)
 
   // Update presence table with cursor position (lower frequency for DB writes)
   const updatePresenceWithCursor = useCallback(async (x, y) => {
@@ -78,9 +79,10 @@ export const useCursors = ({ userId, username, isDragging = false, updateActivit
       lastUpdateRef.current = now
       setMyCursor({ x, y })
 
-      // Track activity for cursor movement
-      if (updateActivity) {
+      // Track activity for cursor movement (throttled to 500ms)
+      if (updateActivity && now - lastActivityUpdateRef.current > 500) {
         updateActivity(x, y)
+        lastActivityUpdateRef.current = now
       }
 
       // Update presence table (lower frequency for DB writes)

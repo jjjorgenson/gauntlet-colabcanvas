@@ -9,10 +9,13 @@ export const usePresence = ({ userId, username }) => {
   const subscriptionRef = useRef(null)
   const presenceIntervalRef = useRef(null)
   const idleCheckIntervalRef = useRef(null)
+  const profileExistsCache = useRef(new Set())
+  const lastActivityUpdate = useRef(0)
 
-  // Ensure profile exists before upserting presence
+  // Ensure profile exists before upserting presence (with caching)
   const ensureProfileExists = useCallback(async () => {
     if (!userId || !username) return
+    if (profileExistsCache.current.has(userId)) return // Skip if already checked
 
     try {
       // Check if profile exists
@@ -35,7 +38,11 @@ export const usePresence = ({ userId, username }) => {
 
         if (insertError) {
           console.error('Error creating profile:', insertError)
+        } else {
+          profileExistsCache.current.add(userId) // Cache successful creation
         }
+      } else if (!checkError) {
+        profileExistsCache.current.add(userId) // Cache existing profile
       } else if (checkError) {
         console.error('Error checking profile:', checkError)
       }
@@ -44,12 +51,12 @@ export const usePresence = ({ userId, username }) => {
     }
   }, [userId, username])
 
-  // Update user activity (called on any user action)
-  const updateActivity = useCallback(async (cursorX = null, cursorY = null) => {
+  // Update user activity (called on any user action) - throttled version
+  const updateActivityInternal = useCallback(async (cursorX = null, cursorY = null) => {
     if (!userId) return
 
     try {
-      // Ensure profile exists first
+      // Ensure profile exists first (cached, so minimal overhead)
       await ensureProfileExists()
 
       const now = new Date().toISOString()
@@ -74,6 +81,20 @@ export const usePresence = ({ userId, username }) => {
       console.error('Error in updateActivity:', error)
     }
   }, [userId, username, ensureProfileExists])
+
+  // Throttled version of updateActivity to prevent excessive DB calls
+  const updateActivity = useCallback(
+    throttle((cursorX = null, cursorY = null) => {
+      const now = Date.now()
+      // Only update activity every 200ms (5 updates per second max)
+      if (now - lastActivityUpdate.current < 200) {
+        return
+      }
+      lastActivityUpdate.current = now
+      updateActivityInternal(cursorX, cursorY)
+    }, 200),
+    [updateActivityInternal]
+  )
 
   // Upsert user presence (legacy function for compatibility)
   const upsertPresence = useCallback(async () => {
@@ -265,7 +286,7 @@ export const usePresence = ({ userId, username }) => {
   const throttledLoadOnlineUsers = useCallback(
     throttle(() => {
       loadOnlineUsers()
-    }, 1000), // Throttle to 1 second max
+    }, 2000), // Throttle to 2 seconds max (was 1 second)
     [loadOnlineUsers]
   )
 
