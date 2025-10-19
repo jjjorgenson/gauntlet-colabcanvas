@@ -154,7 +154,7 @@ export const useCursors = ({ userId, username, isDragging = false, updateActivit
     cursorChannel.subscribe((status) => {
       // Only log errors or important status changes
       if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
-        console.log('Cursor channel status:', status)
+        // console.log('Cursor channel status:', status)
       }
     })
 

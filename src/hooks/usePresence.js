@@ -111,9 +111,9 @@ export const usePresence = ({ userId, username }) => {
       const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000)
       const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000)
 
-      console.log('🔍 IDLE CHECK - Current time:', now.toISOString())
-      console.log('🔍 IDLE CHECK - 5 minutes ago:', fiveMinutesAgo.toISOString())
-      console.log('🔍 IDLE CHECK - 10 minutes ago:', tenMinutesAgo.toISOString())
+      // console.log('🔍 IDLE CHECK - Current time:', now.toISOString())
+      // console.log('🔍 IDLE CHECK - 5 minutes ago:', fiveMinutesAgo.toISOString())
+      // console.log('🔍 IDLE CHECK - 10 minutes ago:', tenMinutesAgo.toISOString())
 
       // Get all active users
       const { data: activeUsers, error: fetchError } = await supabase
@@ -126,8 +126,8 @@ export const usePresence = ({ userId, username }) => {
         return
       }
 
-      console.log('🔍 IDLE CHECK - Found active users:', activeUsers?.length || 0)
-      console.log('🔍 IDLE CHECK - Active users data:', activeUsers)
+      // console.log('🔍 IDLE CHECK - Found active users:', activeUsers?.length || 0)
+      // console.log('🔍 IDLE CHECK - Active users data:', activeUsers)
 
       const newIdleUsers = new Set()
       const usersToDeactivate = []
@@ -143,14 +143,14 @@ export const usePresence = ({ userId, username }) => {
         const timeSinceActivity = now.getTime() - lastActivity.getTime()
         const minutesSinceActivity = Math.floor(timeSinceActivity / (1000 * 60))
         
-        console.log(`🔍 USER ${user.user_id}:`, {
-          lastActivity: lastActivity.toISOString(),
-          lastSeen: user.last_seen,
-          minutesSinceActivity,
-          isIdle: lastActivity < fiveMinutesAgo,
-          shouldDeactivate: lastActivity < tenMinutesAgo,
-          hasLastActivity: !!user.last_activity
-        })
+        // console.log(`🔍 USER ${user.user_id}:`, {
+        //   lastActivity: lastActivity.toISOString(),
+        //   lastSeen: user.last_seen,
+        //   minutesSinceActivity,
+        //   isIdle: lastActivity < fiveMinutesAgo,
+        //   shouldDeactivate: lastActivity < tenMinutesAgo,
+        //   hasLastActivity: !!user.last_activity
+        // })
         
         if (lastActivity < tenMinutesAgo) {
           // User has been inactive for 10+ minutes - mark as inactive
@@ -165,8 +165,8 @@ export const usePresence = ({ userId, username }) => {
 
       // Update idle users set
       setIdleUsers(newIdleUsers)
-      console.log('🔍 IDLE CHECK - New idle users:', Array.from(newIdleUsers))
-      console.log('🔍 IDLE CHECK - Users to deactivate:', usersToDeactivate)
+      // console.log('🔍 IDLE CHECK - New idle users:', Array.from(newIdleUsers))
+      // console.log('🔍 IDLE CHECK - Users to deactivate:', usersToDeactivate)
 
       // Deactivate users who have been inactive for 10+ minutes
       if (usersToDeactivate.length > 0) {
@@ -202,7 +202,7 @@ export const usePresence = ({ userId, username }) => {
           loadOnlineUsers()
         }
       } else {
-        console.log('🔍 IDLE CHECK - No users to deactivate')
+        // console.log('🔍 IDLE CHECK - No users to deactivate')
       }
     } catch (error) {
       console.error('❌ Error in checkIdleUsers:', error)
@@ -244,16 +244,16 @@ export const usePresence = ({ userId, username }) => {
         }
       })
 
-      console.log('👥 LOADED ONLINE USERS:', {
-        count: usersWithColors.length,
-        users: usersWithColors.map(u => ({
-          id: u.user_id,
-          username: u.username,
-          active: u.active,
-          isIdle: u.isIdle,
-          lastActivity: u.last_activity
-        }))
-      })
+      // console.log('👥 LOADED ONLINE USERS:', {
+      //   count: usersWithColors.length,
+      //   users: usersWithColors.map(u => ({
+      //     id: u.user_id,
+      //     username: u.username,
+      //     active: u.active,
+      //     isIdle: u.isIdle,
+      //     lastActivity: u.last_activity
+      //   }))
+      // })
 
       setOnlineUsers(usersWithColors)
     } catch (error) {
@@ -308,12 +308,12 @@ export const usePresence = ({ userId, username }) => {
           table: TABLES.PRESENCE,
         },
         (payload) => {
-          console.log('🔄 PRESENCE CHANGE DETECTED:', {
-            event: payload.eventType,
-            table: payload.table,
-            new: payload.new,
-            old: payload.old
-          })
+          // console.log('🔄 PRESENCE CHANGE DETECTED:', {
+          //   event: payload.eventType,
+          //   table: payload.table,
+          //   new: payload.new,
+          //   old: payload.old
+          // })
           
           // Reload online users when presence changes (throttled to prevent spam)
           throttledLoadOnlineUsers()
