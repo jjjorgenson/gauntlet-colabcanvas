@@ -450,6 +450,77 @@ export const Canvas = ({ user, onlineUsers }) => {
     }
   }, [selectedShapeId, changeShapeColor, setSelectedColor])
 
+  // Z-index management functions
+  const bringToFront = useCallback(async () => {
+    if (!selectedShapeId || !user?.id) return
+
+    try {
+      // Get all shapes to find max z_index
+      const allShapes = objectStore.getAll()
+      const maxZIndex = Math.max(...allShapes.map(shape => shape.z_index || 0), 0)
+      const newZIndex = maxZIndex + 1
+
+      console.log('📈 Bringing shape to front:', selectedShapeId, 'new z_index:', newZIndex)
+
+      // Update in Supabase
+      const { error } = await supabase
+        .from(TABLES.SHAPES)
+        .update({ 
+          z_index: newZIndex,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', selectedShapeId)
+        .eq('created_by', user.id) // Only update own shapes
+
+      if (error) {
+        console.error('❌ Error bringing shape to front:', error)
+        return
+      }
+
+      // Update in ObjectStore
+      objectStore.update(selectedShapeId, { z_index: newZIndex })
+      
+      console.log('✅ Shape brought to front successfully')
+    } catch (error) {
+      console.error('💥 Failed to bring shape to front:', error)
+    }
+  }, [selectedShapeId, user?.id])
+
+  const sendToBack = useCallback(async () => {
+    if (!selectedShapeId || !user?.id) return
+
+    try {
+      // Get all shapes to find min z_index
+      const allShapes = objectStore.getAll()
+      const minZIndex = Math.min(...allShapes.map(shape => shape.z_index || 0), 0)
+      const newZIndex = minZIndex - 1
+
+      console.log('📉 Sending shape to back:', selectedShapeId, 'new z_index:', newZIndex)
+
+      // Update in Supabase
+      const { error } = await supabase
+        .from(TABLES.SHAPES)
+        .update({ 
+          z_index: newZIndex,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', selectedShapeId)
+        .eq('created_by', user.id) // Only update own shapes
+
+      if (error) {
+        console.error('❌ Error sending shape to back:', error)
+        return
+      }
+
+      // Update in ObjectStore
+      objectStore.update(selectedShapeId, { z_index: newZIndex })
+      
+      console.log('✅ Shape sent to back successfully')
+    } catch (error) {
+      console.error('💥 Failed to send shape to back:', error)
+    }
+  }, [selectedShapeId, user?.id])
+
   // Attach transformer to selected shape
   useEffect(() => {
     if (selectedShapeId && transformerRef.current) {
@@ -618,6 +689,26 @@ export const Canvas = ({ user, onlineUsers }) => {
             )
           })}
         </div>
+        
+        {/* Z-index management buttons - only show when shape is selected */}
+        {selectedShapeId && (
+          <div className="z-index-buttons">
+            <button 
+              onClick={bringToFront}
+              className="toolbar-button z-index-button"
+              title="Bring to Front"
+            >
+              ↑ Bring to Front
+            </button>
+            <button 
+              onClick={sendToBack}
+              className="toolbar-button z-index-button"
+              title="Send to Back"
+            >
+              ↓ Send to Back
+            </button>
+          </div>
+        )}
       </div>
       
       <CanvasStage

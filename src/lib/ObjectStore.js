@@ -38,8 +38,8 @@ class ObjectStore {
   }
 
   /**
-   * Get all objects as an array
-   * @returns {Array} Array of all objects
+   * Get all objects as an array, sorted by z_index
+   * @returns {Array} Array of all objects sorted by z_index (ascending)
    */
   getAll() {
     if (!this.objects) {
@@ -48,6 +48,7 @@ class ObjectStore {
     // Return the same array reference if nothing changed
     if (!this._cachedArray || this._arrayVersion !== this._version) {
       this._cachedArray = Array.from(this.objects.values())
+        .sort((a, b) => (a.z_index || 0) - (b.z_index || 0)) // Sort by z_index ascending
       this._arrayVersion = this._version
     }
     return this._cachedArray
