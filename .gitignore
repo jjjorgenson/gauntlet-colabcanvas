@@ -32,6 +32,7 @@ tasks/*
 .env.development.local
 .env.test.local
 .env.production.local
+.cursorignore
 
 # Testing
 coverage

@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './components/Auth/AuthProvider'
 import { LoginForm } from './components/Auth/LoginForm'
 import { Canvas } from './components/Canvas/Canvas'
 import { UsersList } from './components/Presence/UsersList'
+import { AICommandBar } from './components/AI/AICommandBar'
 import { usePresence } from './hooks/usePresence'
 import './App.css'
 
@@ -13,6 +14,12 @@ const AppContent = () => {
     userId: user?.id, 
     username: user?.user_metadata?.username || 'Anonymous' 
   })
+
+  // Handle AI command results
+  const handleAICommandResult = useCallback((result) => {
+    console.log('AI Command executed:', result)
+    // TODO: Execute actions on canvas
+  }, [])
 
   if (loading) {
     return (
@@ -54,6 +61,9 @@ const AppContent = () => {
           />
         </div>
       </div>
+
+      {/* AI Command Bar */}
+      <AICommandBar onCommandResult={handleAICommandResult} />
     </div>
   )
 }
