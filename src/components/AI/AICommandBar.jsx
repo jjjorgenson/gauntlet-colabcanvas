@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import './AICommandBar.css'
 
-export const AICommandBar = ({ onCommandResult, canvasContext }) => {
+export const AICommandBar = ({ onCommandResult, canvasContext, resolveReferences }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [command, setCommand] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -42,7 +42,14 @@ export const AICommandBar = ({ onCommandResult, canvasContext }) => {
     e.preventDefault()
     if (!command.trim() || isLoading) return
 
-    console.log('🚀 Submitting command:', command)
+    const originalCommand = command.trim()
+    const resolvedCommand = resolveReferences ? resolveReferences(originalCommand) : originalCommand
+    
+    console.log('🚀 Submitting command:', originalCommand)
+    if (resolvedCommand !== originalCommand) {
+      console.log('🔄 Resolved command:', resolvedCommand)
+    }
+    
     setIsLoading(true)
     setError(null)
 
@@ -53,7 +60,7 @@ export const AICommandBar = ({ onCommandResult, canvasContext }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          command: command.trim(),
+          command: resolvedCommand,
           canvasContext: canvasContext || null
         })
       })
@@ -68,7 +75,7 @@ export const AICommandBar = ({ onCommandResult, canvasContext }) => {
       // Execute the actions on the canvas
       if (result.actions && result.actions.length > 0) {
         console.log('⚡ Executing actions:', result.actions)
-        onCommandResult?.(result)
+        onCommandResult?.(result, originalCommand)
       } else {
         console.log('❌ No actions to execute')
       }

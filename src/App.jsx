@@ -19,6 +19,10 @@ const AppContent = () => {
     username: user?.user_metadata?.username || 'Anonymous' 
   })
 
+  // Command history and context tracking
+  const [commandHistory, setCommandHistory] = useState([])
+  const [lastCreatedShapeId, setLastCreatedShapeId] = useState(null)
+
   // Function to insert shape into Supabase database
   const insertShapeIntoDatabase = useCallback(async (shapeData) => {
     try {
@@ -198,6 +202,29 @@ const AppContent = () => {
     return positions
   }, [])
 
+  // Resolve references in commands (it, that, the one I just made, etc.)
+  const resolveCommandReferences = useCallback((command) => {
+    let resolvedCommand = command
+    
+    // Replace common references
+    if (lastCreatedShapeId) {
+      const lastShape = objectStore.get(lastCreatedShapeId)
+      if (lastShape) {
+        const shapeDescription = `${lastShape.color} ${lastShape.type}`
+        
+        // Replace references with specific descriptions
+        resolvedCommand = resolvedCommand
+          .replace(/\bit\b/g, `the ${shapeDescription}`)
+          .replace(/\bthat\b/g, `the ${shapeDescription}`)
+          .replace(/\bthe one I just made\b/g, `the ${shapeDescription}`)
+          .replace(/\bthe last one\b/g, `the ${shapeDescription}`)
+      }
+    }
+    
+    console.log('🔄 Command reference resolution:', { original: command, resolved: resolvedCommand })
+    return resolvedCommand
+  }, [lastCreatedShapeId])
+
   // Get current shapes for canvas context
   const getCanvasContext = useCallback(() => {
     const currentShapes = objectStore.getAll()
@@ -213,13 +240,22 @@ const AppContent = () => {
         text_content: shape.text_content
       })),
       canvasWidth: 5000,
-      canvasHeight: 5000
+      canvasHeight: 5000,
+      commandHistory: commandHistory.slice(-3), // Last 3 commands for context
+      lastCreatedShapeId
     }
-  }, [])
+  }, [commandHistory, lastCreatedShapeId])
 
   // Handle AI command results
-  const handleAICommandResult = useCallback(async (result) => {
+  const handleAICommandResult = useCallback(async (result, originalCommand) => {
     console.log('🎯 AI Command executed:', result)
+    
+    // Add command to history
+    setCommandHistory(prev => [...prev.slice(-4), {
+      command: originalCommand,
+      timestamp: new Date().toISOString(),
+      actions: result.actions?.length || 0
+    }])
     
     if (result.actions && result.actions.length > 0) {
       console.log('🔧 Processing actions:', result.actions)
@@ -281,7 +317,13 @@ const AppContent = () => {
         
         // ACTUALLY INSERT INTO SUPABASE DATABASE
         try {
-          await insertShapeIntoDatabase(shapeData)
+          const createdShape = await insertShapeIntoDatabase(shapeData)
+          
+          // Track the last created shape for reference resolution
+          if (action.type === 'create_shape' || action.type === 'create_text') {
+            setLastCreatedShapeId(createdShape.id)
+            console.log('📌 Last created shape ID set:', createdShape.id)
+          }
         } catch (error) {
           console.error(`💥 Failed to create shape ${index + 1}:`, error)
         }
@@ -357,6 +399,7 @@ const AppContent = () => {
       <AICommandBar 
         onCommandResult={handleAICommandResult}
         canvasContext={getCanvasContext()}
+        resolveReferences={resolveCommandReferences}
       />
     </div>
   )

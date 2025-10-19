@@ -55,6 +55,11 @@ Command patterns to handle:
 - "make [description] bigger/smaller" → resize_shape action (find shape by description, use shapeId)
 - "arrange [shapes] in [pattern]" → arrange_shapes action (use shapeIds array)
 
+IMPORTANT: For references like "it", "that", "the one I just made":
+- Look at commandHistory to understand what was created recently
+- Use the most recent shape that matches the description
+- If multiple shapes match, prefer the most recently created one
+
 Position keywords:
 - "center" → x: 2500, y: 2500 (canvas center)
 - "top left" → x: 0, y: 0
