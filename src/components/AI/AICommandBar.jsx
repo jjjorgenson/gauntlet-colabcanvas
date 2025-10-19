@@ -16,7 +16,7 @@ export const AICommandBar = ({ onCommandResult, canvasContext, resolveReferences
       if (e.ctrlKey && e.key === 'k') {
         e.preventDefault()
         e.stopPropagation()
-        console.log('⌨️ Ctrl+K pressed, opening AI Command Bar')
+              // console.log('⌨️ Ctrl+K pressed, opening AI Command Bar')
         setIsVisible(true)
         setTimeout(() => inputRef.current?.focus(), 100)
       }
@@ -45,10 +45,10 @@ export const AICommandBar = ({ onCommandResult, canvasContext, resolveReferences
     const originalCommand = command.trim()
     const resolvedCommand = resolveReferences ? resolveReferences(originalCommand) : originalCommand
     
-    console.log('🚀 Submitting command:', originalCommand)
-    if (resolvedCommand !== originalCommand) {
-      console.log('🔄 Resolved command:', resolvedCommand)
-    }
+          // console.log('🚀 Submitting command:', originalCommand)
+          if (resolvedCommand !== originalCommand) {
+            // console.log('🔄 Resolved command:', resolvedCommand)
+          }
     
     setIsLoading(true)
     setError(null)
@@ -69,33 +69,33 @@ export const AICommandBar = ({ onCommandResult, canvasContext, resolveReferences
         throw new Error(`API Error: ${response.status}`)
       }
 
-      const result = await response.json()
-      console.log('✅ AI Command Result:', result)
-      
-      // DEBUG: Log each action with dimensions
-      if (result.actions && result.actions.length > 0) {
-        console.log('🔍 API ACTIONS WITH DIMENSIONS:')
-        result.actions.forEach((action, index) => {
-          console.log(`Action ${index + 1}:`, {
-            type: action.type,
-            x: action.x,
-            y: action.y,
-            width: action.width,
-            height: action.height,
-            color: action.color,
-            content: action.content,
-            text_content: action.text_content,
-            font_size: action.font_size
-          })
-        })
-      }
+            const result = await response.json()
+            // console.log('✅ AI Command Result:', result)
+            
+            // DEBUG: Log each action with dimensions
+            if (result.actions && result.actions.length > 0) {
+              // console.log('🔍 API ACTIONS WITH DIMENSIONS:')
+              result.actions.forEach((action, index) => {
+                // console.log(`Action ${index + 1}:`, {
+                //   type: action.type,
+                //   x: action.x,
+                //   y: action.y,
+                //   width: action.width,
+                //   height: action.height,
+                //   color: action.color,
+                //   content: action.content,
+                //   text_content: action.text_content,
+                //   font_size: action.font_size
+                // })
+              })
+            }
       
       // Execute the actions on the canvas
       if (result.actions && result.actions.length > 0) {
-        console.log('⚡ Executing actions:', result.actions)
+        // console.log('⚡ Executing actions:', result.actions)
         onCommandResult?.(result, originalCommand)
       } else {
-        console.log('❌ No actions to execute')
+        // console.log('❌ No actions to execute')
       }
       
       setCommand('')

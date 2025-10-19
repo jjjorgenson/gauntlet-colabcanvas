@@ -52,7 +52,7 @@ export const SettingsDropdown = ({ user, username, email }) => {
   // Apply theme to document
   const applyTheme = (themeName) => {
     document.documentElement.setAttribute('data-theme', themeName)
-    console.log('🎨 Theme applied:', themeName)
+    // console.log('🎨 Theme applied:', themeName)
   }
 
   // Save theme preference to Supabase
@@ -76,7 +76,7 @@ export const SettingsDropdown = ({ user, username, email }) => {
 
       setTheme(newTheme)
       applyTheme(newTheme)
-      console.log('✅ Theme saved:', newTheme)
+      // console.log('✅ Theme saved:', newTheme)
     } catch (error) {
       console.error('Error in saveTheme:', error)
     } finally {

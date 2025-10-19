@@ -40,12 +40,12 @@ export const Canvas = ({ user, onlineUsers }) => {
   // DEBUG: Log shapes summary when it changes
   useEffect(() => {
     const aiShapes = shapes.filter(shape => shape.id?.startsWith('ai-'))
-    console.log('📊 SHAPES SUMMARY:', {
-      total: shapes.length,
-      aiShapes: aiShapes.length,
-      aiShapeIds: aiShapes.map(s => s.id),
-      allShapeTypes: shapes.map(s => s.type)
-    })
+    // console.log('📊 SHAPES SUMMARY:', {
+    //   total: shapes.length,
+    //   aiShapes: aiShapes.length,
+    //   aiShapeIds: aiShapes.map(s => s.id),
+    //   allShapeTypes: shapes.map(s => s.type)
+    // })
   }, [shapes.length]) // Only log when count changes
 
   const {
@@ -74,19 +74,19 @@ export const Canvas = ({ user, onlineUsers }) => {
     selectedShapeId,
     userId: user?.id,
     onShapeDeleted: useCallback((shapeId) => {
-      console.log('🎹 Keyboard: Shape deleted:', shapeId)
+      // console.log('🎹 Keyboard: Shape deleted:', shapeId)
       // Shape is already removed from ObjectStore by the hook
     }, []),
     onShapeDuplicated: useCallback((newShape) => {
-      console.log('🎹 Keyboard: Shape duplicated:', newShape.id)
+      // console.log('🎹 Keyboard: Shape duplicated:', newShape.id)
       // Shape is already added to ObjectStore and selected by the hook
     }, []),
     onShapeMoved: useCallback((shapeId, newPosition) => {
-      console.log('🎹 Keyboard: Shape moved:', shapeId, newPosition)
+      // console.log('🎹 Keyboard: Shape moved:', shapeId, newPosition)
       // Shape is already updated in ObjectStore by the hook
     }, []),
     onDeselect: useCallback(() => {
-      console.log('🎹 Keyboard: Deselecting all shapes')
+      // console.log('🎹 Keyboard: Deselecting all shapes')
       deselectAll()
     }, [deselectAll])
   })
@@ -388,7 +388,7 @@ export const Canvas = ({ user, onlineUsers }) => {
     }
     // If shape is owned by another user, don't select (no transform handles)
     else {
-      console.log('Shape is owned by another user, cannot select')
+      // console.log('Shape is owned by another user, cannot select')
     }
   }, [selectShape, acquireOwnership, releaseCurrentOwnership, user?.id])
 
@@ -460,7 +460,7 @@ export const Canvas = ({ user, onlineUsers }) => {
       const maxZIndex = Math.max(...allShapes.map(shape => shape.z_index || 0), 0)
       const newZIndex = maxZIndex + 1
 
-      console.log('📈 Bringing shape to front:', selectedShapeId, 'new z_index:', newZIndex)
+      // console.log('📈 Bringing shape to front:', selectedShapeId, 'new z_index:', newZIndex)
 
       // Update in Supabase
       const { error } = await supabase
@@ -480,7 +480,7 @@ export const Canvas = ({ user, onlineUsers }) => {
       // Update in ObjectStore
       objectStore.update(selectedShapeId, { z_index: newZIndex })
       
-      console.log('✅ Shape brought to front successfully')
+      // console.log('✅ Shape brought to front successfully')
     } catch (error) {
       console.error('💥 Failed to bring shape to front:', error)
     }
@@ -495,7 +495,7 @@ export const Canvas = ({ user, onlineUsers }) => {
       const minZIndex = Math.min(...allShapes.map(shape => shape.z_index || 0), 0)
       const newZIndex = minZIndex - 1
 
-      console.log('📉 Sending shape to back:', selectedShapeId, 'new z_index:', newZIndex)
+      // console.log('📉 Sending shape to back:', selectedShapeId, 'new z_index:', newZIndex)
 
       // Update in Supabase
       const { error } = await supabase
@@ -515,7 +515,7 @@ export const Canvas = ({ user, onlineUsers }) => {
       // Update in ObjectStore
       objectStore.update(selectedShapeId, { z_index: newZIndex })
       
-      console.log('✅ Shape sent to back successfully')
+      // console.log('✅ Shape sent to back successfully')
     } catch (error) {
       console.error('💥 Failed to send shape to back:', error)
     }
@@ -548,7 +548,7 @@ export const Canvas = ({ user, onlineUsers }) => {
         if (error) {
           // If function doesn't exist yet, just log and continue
           if (error.code === 'PGRST202') {
-            console.log('📝 Database cleanup function not yet installed - run ownership-cleanup-function.sql')
+            // console.log('📝 Database cleanup function not yet installed - run ownership-cleanup-function.sql')
             return
           }
           console.error('Error during periodic ownership cleanup:', error)
@@ -558,7 +558,7 @@ export const Canvas = ({ user, onlineUsers }) => {
         if (data && data.length > 0) {
           const { cleaned_count, remaining_owned } = data[0]
           if (cleaned_count > 0) {
-            console.log(`Periodic cleanup: Released ${cleaned_count} expired ownerships, ${remaining_owned} still owned`)
+            // console.log(`Periodic cleanup: Released ${cleaned_count} expired ownerships, ${remaining_owned} still owned`)
             
             // Update local state to reflect the cleanup
             setOwnedShapes(prev => {

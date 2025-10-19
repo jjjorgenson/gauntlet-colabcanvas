@@ -27,17 +27,17 @@ const AppContent = () => {
   // Function to insert shape into Supabase database
   const insertShapeIntoDatabase = useCallback(async (shapeData) => {
     try {
-      console.log('💾 SUPABASE INSERT - Input shapeData:', {
-        id: shapeData.id,
-        type: shapeData.type,
-        x: shapeData.x,
-        y: shapeData.y,
-        width: shapeData.width,
-        height: shapeData.height,
-        color: shapeData.color,
-        text_content: shapeData.text_content,
-        font_size: shapeData.font_size
-      })
+      // console.log('💾 SUPABASE INSERT - Input shapeData:', {
+      //   id: shapeData.id,
+      //   type: shapeData.type,
+      //   x: shapeData.x,
+      //   y: shapeData.y,
+      //   width: shapeData.width,
+      //   height: shapeData.height,
+      //   color: shapeData.color,
+      //   text_content: shapeData.text_content,
+      //   font_size: shapeData.font_size
+      // })
       
       const { data, error } = await supabase
         .from(TABLES.SHAPES)
@@ -50,20 +50,20 @@ const AppContent = () => {
         throw error
       }
 
-      console.log('✅ SUPABASE INSERT - Returned data:', {
-        id: data.id,
-        type: data.type,
-        x: data.x,
-        y: data.y,
-        width: data.width,
-        height: data.height,
-        color: data.color,
-        text_content: data.text_content,
-        font_size: data.font_size
-      })
+      // console.log('✅ SUPABASE INSERT - Returned data:', {
+      //   id: data.id,
+      //   type: data.type,
+      //   x: data.x,
+      //   y: data.y,
+      //   width: data.width,
+      //   height: data.height,
+      //   color: data.color,
+      //   text_content: data.text_content,
+      //   font_size: data.font_size
+      // })
       
       // Add the shape to ObjectStore so it appears on canvas immediately
-      console.log('🎨 Adding shape to ObjectStore for immediate display')
+      // console.log('🎨 Adding shape to ObjectStore for immediate display')
       objectStore.add(data)
       
       return data
@@ -76,7 +76,7 @@ const AppContent = () => {
   // Function to move shape in database
   const moveShapeInDatabase = useCallback(async (shapeId, x, y) => {
     try {
-      console.log('💾 Moving shape in Supabase:', { shapeId, x, y })
+      // console.log('💾 Moving shape in Supabase:', { shapeId, x, y })
       
       const { data, error } = await supabase
         .from(TABLES.SHAPES)
@@ -90,7 +90,7 @@ const AppContent = () => {
         throw error
       }
 
-      console.log('✅ Shape moved in Supabase:', data.id)
+      // console.log('✅ Shape moved in Supabase:', data.id)
       
       // Update ObjectStore
       objectStore.update(shapeId, { x, y })
@@ -105,7 +105,7 @@ const AppContent = () => {
   // Function to resize shape in database
   const resizeShapeInDatabase = useCallback(async (shapeId, width, height) => {
     try {
-      console.log('💾 Resizing shape in Supabase:', { shapeId, width, height })
+      // console.log('💾 Resizing shape in Supabase:', { shapeId, width, height })
       
       const { data, error } = await supabase
         .from(TABLES.SHAPES)
@@ -119,7 +119,7 @@ const AppContent = () => {
         throw error
       }
 
-      console.log('✅ Shape resized in Supabase:', data.id)
+      // console.log('✅ Shape resized in Supabase:', data.id)
       
       // Update ObjectStore
       objectStore.update(shapeId, { width, height })
@@ -134,7 +134,7 @@ const AppContent = () => {
   // Function to arrange shapes in database
   const arrangeShapesInDatabase = useCallback(async (shapeIds, pattern, spacing = 50) => {
     try {
-      console.log('💾 Arranging shapes in Supabase:', { shapeIds, pattern, spacing })
+      // console.log('💾 Arranging shapes in Supabase:', { shapeIds, pattern, spacing })
       
       const shapes = objectStore.getAll().filter(shape => shapeIds.includes(shape.id))
       const positions = calculateArrangementPositions(shapes, pattern, spacing)
@@ -163,7 +163,7 @@ const AppContent = () => {
         }
       }
 
-      console.log('✅ Shapes arranged in Supabase')
+      // console.log('✅ Shapes arranged in Supabase')
       
     } catch (error) {
       console.error('💥 Failed to arrange shapes in database:', error)
@@ -242,7 +242,7 @@ const AppContent = () => {
       }
     }
     
-    console.log('🔄 Command reference resolution:', { original: command, resolved: resolvedCommand })
+    // console.log('🔄 Command reference resolution:', { original: command, resolved: resolvedCommand })
     return resolvedCommand
   }, [lastCreatedShapeId])
 
@@ -269,7 +269,7 @@ const AppContent = () => {
 
   // Handle AI command results
   const handleAICommandResult = useCallback(async (result, originalCommand) => {
-    console.log('🎯 AI Command executed:', result)
+    // console.log('🎯 AI Command executed:', result)
     
     // Add command to history
     setCommandHistory(prev => [...prev.slice(-4), {
@@ -279,12 +279,12 @@ const AppContent = () => {
     }])
     
     if (result.actions && result.actions.length > 0) {
-      console.log('🔧 Processing actions:', result.actions)
+      // console.log('🔧 Processing actions:', result.actions)
       
       // Process actions sequentially to avoid race conditions
       for (let index = 0; index < result.actions.length; index++) {
         const action = result.actions[index]
-        console.log(`Action ${index + 1}:`, action)
+        // console.log(`Action ${index + 1}:`, action)
         
         // Map AI action types to database types
         const mapActionTypeToDbType = (actionType) => {
@@ -300,35 +300,35 @@ const AppContent = () => {
 
         // Handle different action types
         if (action.type === 'move_shape') {
-          console.log('🔄 Moving shape:', action.shapeId, 'to', action.x, action.y)
+          // console.log('🔄 Moving shape:', action.shapeId, 'to', action.x, action.y)
           await moveShapeInDatabase(action.shapeId, action.x, action.y)
           return
         }
 
         if (action.type === 'resize_shape') {
-          console.log('📏 Resizing shape:', action.shapeId, 'to', action.width, 'x', action.height)
+          // console.log('📏 Resizing shape:', action.shapeId, 'to', action.width, 'x', action.height)
           await resizeShapeInDatabase(action.shapeId, action.width, action.height)
           return
         }
 
         if (action.type === 'arrange_shapes') {
-          console.log('📐 Arranging shapes:', action.shapeIds, 'in pattern:', action.pattern)
+          // console.log('📐 Arranging shapes:', action.shapeIds, 'in pattern:', action.pattern)
           await arrangeShapesInDatabase(action.shapeIds, action.pattern, action.spacing)
           return
         }
 
         // DEBUG: Log the raw action from API
-        console.log('🔍 RAW ACTION FROM API:', {
-          type: action.type,
-          x: action.x,
-          y: action.y,
-          width: action.width,
-          height: action.height,
-          color: action.color,
-          content: action.content,
-          text_content: action.text_content,
-          font_size: action.font_size
-        })
+        // console.log('🔍 RAW ACTION FROM API:', {
+        //   type: action.type,
+        //   x: action.x,
+        //   y: action.y,
+        //   width: action.width,
+        //   height: action.height,
+        //   color: action.color,
+        //   content: action.content,
+        //   text_content: action.text_content,
+        //   font_size: action.font_size
+        // })
 
         // Create shape data using API values (not hardcoded defaults)
         const shapeData = {
@@ -347,17 +347,17 @@ const AppContent = () => {
           font_size: action.font_size || 16 // Use API font_size value
         }
         
-        console.log('🎨 SHAPE DATA TO INSERT:', {
-          id: shapeData.id,
-          type: shapeData.type,
-          x: shapeData.x,
-          y: shapeData.y,
-          width: shapeData.width,
-          height: shapeData.height,
-          color: shapeData.color,
-          text_content: shapeData.text_content,
-          font_size: shapeData.font_size
-        })
+        // console.log('🎨 SHAPE DATA TO INSERT:', {
+        //   id: shapeData.id,
+        //   type: shapeData.type,
+        //   x: shapeData.x,
+        //   y: shapeData.y,
+        //   width: shapeData.width,
+        //   height: shapeData.height,
+        //   color: shapeData.color,
+        //   text_content: shapeData.text_content,
+        //   font_size: shapeData.font_size
+        // })
         
         // ACTUALLY INSERT INTO SUPABASE DATABASE
         try {
@@ -366,7 +366,7 @@ const AppContent = () => {
           // Track the last created shape for reference resolution
           if (action.type === 'create_shape' || action.type === 'create_text') {
             setLastCreatedShapeId(createdShape.id)
-            console.log('📌 Last created shape ID set:', createdShape.id)
+            // console.log('📌 Last created shape ID set:', createdShape.id)
           }
         } catch (error) {
           console.error(`💥 Failed to create shape ${index + 1}:`, error)
