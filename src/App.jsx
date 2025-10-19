@@ -7,6 +7,7 @@ import { AICommandBar } from './components/AI/AICommandBar'
 import { usePresence } from './hooks/usePresence'
 import { supabase } from './lib/supabase'
 import { TABLES } from './lib/constants'
+import { generateId } from './utils/canvasHelpers'
 import './App.css'
 
 const AppContent = () => {
@@ -55,7 +56,7 @@ const AppContent = () => {
         
         // Create shape data with BRIGHT colors and LARGE size for debugging
         const shapeData = {
-          id: `ai-${Date.now()}-${index}`, // Temporary ID
+          id: generateId(), // Generate proper UUID
           type: action.shape || action.type,
           x: action.x || 0, // Use 0,0 for visibility
           y: action.y || 0,
