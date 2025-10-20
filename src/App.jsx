@@ -390,24 +390,6 @@ const AppContent = () => {
 
   return (
     <Routes>
-      {/* Test route - simple test to see if routing works */}
-      <Route path="/test" element={
-        <div style={{ 
-          padding: '50px', 
-          textAlign: 'center', 
-          fontSize: '24px', 
-          fontWeight: 'bold',
-          color: '#333',
-          backgroundColor: '#f0f0f0',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          TEST PAGE WORKS
-        </div>
-      } />
-      
       {/* Auth callback route - must be first */}
       <Route path="/auth/callback" element={<AuthCallback />} />
       
