@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './components/Auth/AuthProvider'
 import { LoginForm } from './components/Auth/LoginForm'
 import { AuthCallback } from './components/Auth/AuthCallback'
@@ -16,7 +16,6 @@ import './App.css'
 
 const AppContent = () => {
   const { user, loading, logout, username } = useAuth()
-  const location = useLocation()
   
   const { onlineUsers, updateActivity } = usePresence({ 
     userId: user?.id, 
@@ -389,80 +388,85 @@ const AppContent = () => {
     )
   }
 
-  // Handle auth callback route
-  if (location.pathname === '/auth/callback') {
-    return <AuthCallback />
-  }
-
-  // Show login form if no user or if there's an error
-  if (!user) {
-    return <LoginForm />
-  }
-
   return (
-    <div className="app">
-      <div className="app-header">
-        <div className="header-content">
-          <h3>CollabCanvas</h3>
-          <span className="username">Welcome, {username}</span>
-          <button 
-            onClick={() => {
-              // Test button to open AI Command Bar
-              const event = new KeyboardEvent('keydown', {
-                key: 'k',
-                ctrlKey: true,
-                bubbles: true
-              })
-              document.dispatchEvent(event)
-            }}
-            className="ai-test-button"
-            style={{
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              marginRight: '10px',
-              cursor: 'pointer'
-            }}
-          >
-            🤖 AI (Ctrl+K)
-          </button>
-          <SettingsDropdown 
-            user={user}
-            username={username}
-            email={user?.email}
-            onClose={() => {}} // Don't auto-logout when closing settings
-          />
-          <button 
-            onClick={logout}
-            className="logout-button"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+    <Routes>
+      {/* Auth callback route - must be first */}
+      <Route path="/auth/callback" element={<AuthCallback />} />
       
-      <div className="app-main">
-        <div className="canvas-wrapper">
-          <Canvas user={user} onlineUsers={onlineUsers} updateActivity={updateActivity} />
-        </div>
-        
-        <div className="sidebar">
-          <UsersList 
-            onlineUsers={onlineUsers}
-            currentUser={user}
-          />
-        </div>
-      </div>
+      {/* Protected routes - require authentication */}
+      <Route 
+        path="/*" 
+        element={
+          user ? (
+            <div className="app">
+              <div className="app-header">
+                <div className="header-content">
+                  <h3>CollabCanvas</h3>
+                  <span className="username">Welcome, {username}</span>
+                  <button 
+                    onClick={() => {
+                      // Test button to open AI Command Bar
+                      const event = new KeyboardEvent('keydown', {
+                        key: 'k',
+                        ctrlKey: true,
+                        bubbles: true
+                      })
+                      document.dispatchEvent(event)
+                    }}
+                    className="ai-test-button"
+                    style={{
+                      background: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      marginRight: '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🤖 AI (Ctrl+K)
+                  </button>
+                  <SettingsDropdown 
+                    user={user}
+                    username={username}
+                    email={user?.email}
+                    onClose={() => {}} // Don't auto-logout when closing settings
+                  />
+                  <button 
+                    onClick={logout}
+                    className="logout-button"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+              
+              <div className="app-main">
+                <div className="canvas-wrapper">
+                  <Canvas user={user} onlineUsers={onlineUsers} updateActivity={updateActivity} />
+                </div>
+                
+                <div className="sidebar">
+                  <UsersList 
+                    onlineUsers={onlineUsers}
+                    currentUser={user}
+                  />
+                </div>
+              </div>
 
-      {/* AI Command Bar */}
-      <AICommandBar 
-        onCommandResult={handleAICommandResult}
-        canvasContext={getCanvasContext()}
-        resolveReferences={resolveCommandReferences}
+              {/* AI Command Bar */}
+              <AICommandBar 
+                onCommandResult={handleAICommandResult}
+                canvasContext={getCanvasContext()}
+                resolveReferences={resolveCommandReferences}
+              />
+            </div>
+          ) : (
+            <LoginForm />
+          )
+        } 
       />
-    </div>
+    </Routes>
   )
 }
 
