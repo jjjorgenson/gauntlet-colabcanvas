@@ -60,7 +60,9 @@ export const AuthProvider = ({ children }) => {
         data: {
           username: username
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`
+        // Use production URL for email verification redirect
+        // This URL must be whitelisted in Supabase Auth settings
+        emailRedirectTo: `https://gauntlet-colabcanvas.vercel.app/auth/callback`
       }
     })
     
