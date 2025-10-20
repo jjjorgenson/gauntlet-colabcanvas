@@ -233,12 +233,58 @@ const AppContent = () => {
       // If no shapeId provided, find by description
       if (!targetShapeId && description) {
         const allShapes = objectStore.getAll()
+        
+        // Color name to hex mapping
+        const colorMap = {
+          'red': '#ff0000',
+          'green': '#10B981',
+          'blue': '#0000ff',
+          'yellow': '#ffff00',
+          'orange': '#FFA500',
+          'purple': '#8B5CF6',
+          'pink': '#ff69b4',
+          'black': '#000000',
+          'white': '#ffffff',
+          'gray': '#808080',
+          'grey': '#808080',
+          'brown': '#8B4513',
+          'cyan': '#00ffff',
+          'magenta': '#ff00ff',
+          'lime': '#00ff00',
+          'navy': '#000080',
+          'teal': '#008080',
+          'olive': '#808000',
+          'maroon': '#800000',
+          'silver': '#c0c0c0',
+          'gold': '#FFD700'
+        }
+        
         const matchingShape = allShapes.find(shape => {
-          if (!shape || !shape.color || !shape.type) return false
+          if (!shape || !shape.color || !shape.type) {
+            return false
+          }
+          
           const shapeDescription = `${shape.color} ${shape.type}`
-          return shapeDescription.toLowerCase().includes(description.toLowerCase()) ||
-                 shape.type.toLowerCase().includes(description.toLowerCase()) ||
-                 shape.color.toLowerCase().includes(description.toLowerCase())
+          const searchTerm = description.toLowerCase()
+          
+          // Try multiple matching strategies
+          const matches = 
+            shapeDescription.toLowerCase().includes(searchTerm) ||
+            shape.type.toLowerCase().includes(searchTerm) ||
+            shape.color.toLowerCase().includes(searchTerm) ||
+            // Try matching individual words with color mapping
+            searchTerm.split(' ').every(word => {
+              // Check if word is a color name and matches the hex code
+              if (colorMap[word] && shape.color.toLowerCase() === colorMap[word].toLowerCase()) {
+                return true
+              }
+              // Check if word matches type, color, or description
+              return shapeDescription.toLowerCase().includes(word) ||
+                     shape.type.toLowerCase().includes(word) ||
+                     shape.color.toLowerCase().includes(word)
+            })
+          
+          return matches
         })
         
         if (matchingShape) {
