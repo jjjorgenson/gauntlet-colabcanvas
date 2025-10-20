@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
+import './LoginForm.css'
 
 export const LoginForm = () => {
   const [isSignup, setIsSignup] = useState(false)

@@ -59,7 +59,8 @@ export const AuthProvider = ({ children }) => {
       options: {
         data: {
           username: username
-        }
+        },
+        emailRedirectTo: `${window.location.origin}/auth/callback`
       }
     })
     

@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './components/Auth/AuthProvider'
 import { LoginForm } from './components/Auth/LoginForm'
+import { AuthCallback } from './components/Auth/AuthCallback'
 import { Canvas } from './components/Canvas/Canvas'
 import { UsersList } from './components/Presence/UsersList'
 import { AICommandBar } from './components/AI/AICommandBar'
@@ -14,6 +16,7 @@ import './App.css'
 
 const AppContent = () => {
   const { user, loading, logout, username } = useAuth()
+  const location = useLocation()
   
   const { onlineUsers, updateActivity } = usePresence({ 
     userId: user?.id, 
@@ -386,6 +389,11 @@ const AppContent = () => {
     )
   }
 
+  // Handle auth callback route
+  if (location.pathname === '/auth/callback') {
+    return <AuthCallback />
+  }
+
   // Show login form if no user or if there's an error
   if (!user) {
     return <LoginForm />
@@ -460,9 +468,11 @@ const AppContent = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   )
 }
 

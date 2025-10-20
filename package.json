@@ -10,12 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "openai": "^4.67.0",
     "@supabase/supabase-js": "^2.75.0",
     "konva": "^10.0.2",
+    "openai": "^4.67.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-konva": "^19.0.10",
+    "react-router-dom": "^7.9.4",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
