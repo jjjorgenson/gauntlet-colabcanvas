@@ -349,7 +349,8 @@ export const Canvas = ({ user, onlineUsers, updateActivity }) => {
     if (stage) {
       const pointer = stage.getPointerPosition()
       if (pointer) {
-        updateCursorPosition(pointer.x, pointer.y)
+        // Pass stage reference along with canvas coordinates
+        updateCursorPosition(stage, pointer.x, pointer.y)
       }
     }
   }, [updateCursorPosition, isDragging])

@@ -66,17 +66,20 @@ export const useCursors = ({ userId, username, isDragging = false, updateActivit
     }
   }, [userId, username])
 
-  // Throttled function to update cursor position
+  // Throttled function to update cursor position - now receives stage reference to handle coordinate conversion
   const updateCursorPosition = useCallback(
-    throttle((x, y) => {
+    throttle((stage, x, y) => {
       const now = Date.now()
       // During drag, use much faster updates for near-real-time sync
       const throttleInterval = isDragging ? 16 : 100 // 16ms = ~60fps during drag
       if (now - lastUpdateRef.current < throttleInterval) {
         return
       }
-      
+
       lastUpdateRef.current = now
+
+      // Canvas coordinates (x, y) are already in the correct coordinate system
+      // No conversion needed here since we receive canvas coordinates from stage.getPointerPosition()
       setMyCursor({ x, y })
 
       // Track activity for cursor movement (throttled to 500ms)
@@ -95,8 +98,8 @@ export const useCursors = ({ userId, username, isDragging = false, updateActivit
           payload: {
             user_id: userId,
             username: username,
-            cursor_x: x,
-            cursor_y: y,
+            cursor_x: x, // Canvas coordinates
+            cursor_y: y, // Canvas coordinates
             color: getUserColor(userId), // Add user color to match sidebar
             timestamp: now,
             isDragging: isDragging // Include drag state in broadcast

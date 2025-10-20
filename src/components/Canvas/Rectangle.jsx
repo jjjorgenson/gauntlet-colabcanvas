@@ -46,10 +46,10 @@ export const Rectangle = ({
       const pointer = stage.getPointerPosition()
       if (pointer) {
         // Update cursor position during drag for real-time collaboration
-        onCursorUpdate?.(pointer.x, pointer.y)
-        
+        onCursorUpdate?.(stage, pointer.x, pointer.y)
+
         onDragMove?.(pointer.x, pointer.y)
-        
+
         // Broadcast position update during drag
         const newPos = {
           x: e.target.x(),
