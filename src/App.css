@@ -682,6 +682,59 @@
   font-size: 0.8rem;
 }
 
+/* Keyboard Shortcuts Styles */
+.shortcuts-section {
+  margin-bottom: 0;
+}
+
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.shortcut-category {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shortcut-category h5 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.shortcut-key {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+  min-width: 60px;
+  text-align: center;
+}
+
+.shortcut-description {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-left: 12px;
+  flex: 1;
+}
+
 /* User List Styles */
 .users-list {
   padding: 1rem;

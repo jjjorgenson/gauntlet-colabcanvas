@@ -154,6 +154,60 @@ export const SettingsDropdown = ({ user, username, email }) => {
               </div>
             </div>
 
+            {/* Keyboard Shortcuts */}
+            <div className="shortcuts-section">
+              <label className="section-label">Keyboard Shortcuts:</label>
+              <div className="shortcuts-list">
+                <div className="shortcut-category">
+                  <h5>Canvas Operations</h5>
+                  <div className="shortcut-item">
+                    <span className="shortcut-key">Delete</span>
+                    <span className="shortcut-description">Delete selected shapes</span>
+                  </div>
+                  <div className="shortcut-item">
+                    <span className="shortcut-key">Backspace</span>
+                    <span className="shortcut-description">Delete selected shapes</span>
+                  </div>
+                  <div className="shortcut-item">
+                    <span className="shortcut-key">Ctrl+D</span>
+                    <span className="shortcut-description">Duplicate selected shapes</span>
+                  </div>
+                  <div className="shortcut-item">
+                    <span className="shortcut-key">↑ ↓ ← →</span>
+                    <span className="shortcut-description">Move selected shapes</span>
+                  </div>
+                  <div className="shortcut-item">
+                    <span className="shortcut-key">Escape</span>
+                    <span className="shortcut-description">Deselect all shapes</span>
+                  </div>
+                </div>
+
+                <div className="shortcut-category">
+                  <h5>AI Commands</h5>
+                  <div className="shortcut-item">
+                    <span className="shortcut-key">Ctrl+K</span>
+                    <span className="shortcut-description">Open AI Command Bar</span>
+                  </div>
+                </div>
+
+                <div className="shortcut-category">
+                  <h5>Selection</h5>
+                  <div className="shortcut-item">
+                    <span className="shortcut-key">Shift+Click</span>
+                    <span className="shortcut-description">Multi-select shapes</span>
+                  </div>
+                  <div className="shortcut-item">
+                    <span className="shortcut-key">Click</span>
+                    <span className="shortcut-description">Single select shape</span>
+                  </div>
+                  <div className="shortcut-item">
+                    <span className="shortcut-key">Click empty space</span>
+                    <span className="shortcut-description">Deselect all</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
