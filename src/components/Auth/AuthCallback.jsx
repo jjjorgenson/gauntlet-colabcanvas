@@ -21,7 +21,7 @@ export const AuthCallback = () => {
 
         if (data.session) {
           setStatus('Email verified successfully! Redirecting...')
-          setTimeout(() => navigate('/'), 2000)
+          setTimeout(() => navigate('/auth/callback/success'), 1000)
         } else {
           setStatus('No active session found. Please try logging in.')
           setTimeout(() => navigate('/'), 3000)
