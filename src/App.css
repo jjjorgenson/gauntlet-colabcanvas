@@ -794,6 +794,11 @@
   font-weight: 500;
 }
 
+/* Light theme: use grey text for usernames */
+[data-theme="light"] .username {
+  color: var(--text-secondary);
+}
+
 .user-item.current-user .username {
   color: white;
 }
