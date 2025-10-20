@@ -234,6 +234,7 @@ const AppContent = () => {
       if (!targetShapeId && description) {
         const allShapes = objectStore.getAll()
         const matchingShape = allShapes.find(shape => {
+          if (!shape || !shape.color || !shape.type) return false
           const shapeDescription = `${shape.color} ${shape.type}`
           return shapeDescription.toLowerCase().includes(description.toLowerCase()) ||
                  shape.type.toLowerCase().includes(description.toLowerCase()) ||
@@ -343,13 +344,16 @@ const AppContent = () => {
         
         // Map AI action types to database types
         const mapActionTypeToDbType = (actionType) => {
+          const validTypes = ['rectangle', 'circle', 'text']
+          
           switch (actionType) {
             case 'create_shape':
-              return action.shape || 'rectangle' // Use the shape field (circle, rectangle, text)
+              const shapeType = action.shape || 'rectangle'
+              return validTypes.includes(shapeType) ? shapeType : 'rectangle'
             case 'create_text':
               return 'text'
             default:
-              return actionType
+              return 'rectangle' // Default fallback to valid database type
           }
         }
 
