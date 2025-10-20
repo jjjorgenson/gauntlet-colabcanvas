@@ -183,6 +183,24 @@ export default async function handler(req, res) {
           },
           required: ['shapeIds', 'pattern']
         }
+      },
+      {
+        name: 'deleteShape',
+        description: 'Delete a shape from the canvas by ID or description',
+        parameters: {
+          type: 'object',
+          properties: {
+            shapeId: {
+              type: 'string',
+              description: 'ID of the shape to delete (if known)'
+            },
+            description: {
+              type: 'string',
+              description: 'Description of the shape to delete (e.g., "red circle", "blue rectangle", "text element")'
+            }
+          },
+          required: []
+        }
       }
     ]
 
@@ -369,6 +387,16 @@ You MUST call multiple functions for complex commands. Do not try to create ever
           actions.push(arrangeShapesAction)
           console.log('✅ CREATED ARRANGE ACTION:', arrangeShapesAction)
           break
+
+        case 'deleteShape':
+          const deleteShapeAction = {
+            type: 'delete_shape',
+            shapeId: functionArgs.shapeId,
+            description: functionArgs.description
+          }
+          actions.push(deleteShapeAction)
+          console.log('✅ CREATED DELETE ACTION:', deleteShapeAction)
+          break
       }
     }
 
@@ -449,6 +477,16 @@ You MUST call multiple functions for complex commands. Do not try to create ever
             }
             actions.push(toolArrangeShapesAction)
             console.log(`✅ TOOL CREATED ARRANGE ACTION ${i + 1}:`, toolArrangeShapesAction)
+            break
+
+          case 'deleteShape':
+            const toolDeleteShapeAction = {
+              type: 'delete_shape',
+              shapeId: functionArgs.shapeId,
+              description: functionArgs.description
+            }
+            actions.push(toolDeleteShapeAction)
+            console.log(`✅ TOOL CREATED DELETE ACTION ${i + 1}:`, toolDeleteShapeAction)
             break
         }
       }

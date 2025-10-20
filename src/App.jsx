@@ -225,6 +225,56 @@ const AppContent = () => {
     return positions
   }, [])
 
+  // Function to delete shape from database
+  const deleteShapeFromDatabase = useCallback(async (shapeId, description) => {
+    try {
+      let targetShapeId = shapeId
+
+      // If no shapeId provided, find by description
+      if (!targetShapeId && description) {
+        const allShapes = objectStore.getAll()
+        const matchingShape = allShapes.find(shape => {
+          const shapeDescription = `${shape.color} ${shape.type}`
+          return shapeDescription.toLowerCase().includes(description.toLowerCase()) ||
+                 shape.type.toLowerCase().includes(description.toLowerCase()) ||
+                 shape.color.toLowerCase().includes(description.toLowerCase())
+        })
+        
+        if (matchingShape) {
+          targetShapeId = matchingShape.id
+        } else {
+          console.error('❌ No shape found matching description:', description)
+          return
+        }
+      }
+
+      if (!targetShapeId) {
+        console.error('❌ No shape ID or description provided for deletion')
+        return
+      }
+
+      // console.log('🗑️ Deleting shape from Supabase:', targetShapeId)
+      
+      const { error } = await supabase
+        .from(TABLES.SHAPES)
+        .delete()
+        .eq('id', targetShapeId)
+        .eq('created_by', user?.id) // Only delete own shapes
+
+      if (error) {
+        console.error('❌ Supabase delete error:', error)
+        return
+      }
+
+      // Remove from ObjectStore
+      objectStore.remove(targetShapeId)
+      
+      // console.log('✅ Shape deleted successfully:', targetShapeId)
+    } catch (error) {
+      console.error('💥 Failed to delete shape from database:', error)
+    }
+  }, [user?.id])
+
   // Resolve references in commands (it, that, the one I just made, etc.)
   const resolveCommandReferences = useCallback((command) => {
     let resolvedCommand = command
@@ -322,6 +372,12 @@ const AppContent = () => {
           return
         }
 
+        if (action.type === 'delete_shape') {
+          // console.log('🗑️ Deleting shape:', action.shapeId || action.description)
+          await deleteShapeFromDatabase(action.shapeId, action.description)
+          return
+        }
+
         // DEBUG: Log the raw action from API
         // console.log('🔍 RAW ACTION FROM API:', {
         //   type: action.type,
@@ -378,7 +434,7 @@ const AppContent = () => {
         }
       }
     }
-  }, [user?.id, insertShapeIntoDatabase, updateActivity])
+  }, [user?.id, insertShapeIntoDatabase, moveShapeInDatabase, resizeShapeInDatabase, arrangeShapesInDatabase, deleteShapeFromDatabase, updateActivity])
 
   if (loading) {
     return (
