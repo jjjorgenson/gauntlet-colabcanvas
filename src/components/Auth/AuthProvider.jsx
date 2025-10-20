@@ -62,6 +62,8 @@ export const AuthProvider = ({ children }) => {
         },
         // Use production URL for email verification redirect
         // This URL must be whitelisted in Supabase Auth settings
+        // For local testing, you can temporarily change this to:
+        // emailRedirectTo: `http://localhost:5173/auth/callback`
         emailRedirectTo: `https://gauntlet-colabcanvas.vercel.app/auth/callback`
       }
     })
