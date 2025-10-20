@@ -28,6 +28,11 @@
   margin: 0 auto 1.5rem auto;
 }
 
+.success-icon {
+  font-size: 4rem;
+  margin: 0 auto 1.5rem auto;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -42,8 +47,14 @@
 
 .auth-callback-content p {
   color: #6b7280;
-  margin: 0;
+  margin: 0 0 0.5rem 0;
   font-size: 0.95rem;
+}
+
+.redirect-text {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  font-style: italic;
 }
 
 /* Dark mode support */
@@ -59,6 +70,10 @@
   
   .auth-callback-content p {
     color: #d1d5db;
+  }
+  
+  .redirect-text {
+    color: #9ca3af;
   }
   
   .spinner {

@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './components/Auth/AuthProvider'
 import { LoginForm } from './components/Auth/LoginForm'
 import { AuthCallback } from './components/Auth/AuthCallback'
-import { EmailVerificationSuccess } from './components/Auth/EmailVerificationSuccess'
 import { Canvas } from './components/Canvas/Canvas'
 import { UsersList } from './components/Presence/UsersList'
 import { AICommandBar } from './components/AI/AICommandBar'
@@ -390,13 +389,9 @@ const AppContent = () => {
     )
   }
 
-  // Handle auth callback routes
+  // Handle auth callback route
   if (location.pathname === '/auth/callback') {
     return <AuthCallback />
-  }
-  
-  if (location.pathname === '/auth/callback/success') {
-    return <EmailVerificationSuccess />
   }
 
   // Show login form if no user or if there's an error
