@@ -186,7 +186,7 @@ export default async function handler(req, res) {
       },
       {
         name: 'deleteShape',
-        description: 'Delete a shape from the canvas by ID or description',
+        description: 'Delete a shape from the canvas by ID or description. Use this for commands like "delete red circle", "remove blue rectangle", "delete the shape I just made"',
         parameters: {
           type: 'object',
           properties: {
@@ -196,7 +196,7 @@ export default async function handler(req, res) {
             },
             description: {
               type: 'string',
-              description: 'Description of the shape to delete (e.g., "red circle", "blue rectangle", "text element")'
+              description: 'Description of the shape to delete (e.g., "red circle", "blue rectangle", "text element"). Use this when user describes the shape to delete.'
             }
           },
           required: []
@@ -253,6 +253,15 @@ COMPLEX COMMAND EXAMPLES:
 - "create login form" → MUST call 5 functions: createText("Username:"), createShape(username input), createText("Password:"), createShape(password input), createShape(button)
 - "add 3 blue circles" → Call createShape 3 times with different positions
 - "create navigation bar" → Call createShape for background, createText for each menu item
+- "delete the red circle" → Call deleteShape with description="red circle"
+- "remove blue rectangle" → Call deleteShape with description="blue rectangle"
+- "delete shape with ID shape1" → Call deleteShape with shapeId="shape1"
+
+DELETE OPERATIONS:
+- When user says "delete [description]", use deleteShape with description parameter
+- When user provides specific ID, use deleteShape with shapeId parameter
+- Match shapes by color, type, or other descriptive attributes
+- If multiple shapes match, delete the most recently created one
 
 EXAMPLE: For "create login form", you should make exactly 5 tool calls:
 1. createText with content="Username:", x=300, y=200
@@ -260,6 +269,9 @@ EXAMPLE: For "create login form", you should make exactly 5 tool calls:
 3. createText with content="Password:", x=300, y=285
 4. createShape with shape="rectangle", x=300, y=310, color="#f3f4f6"
 5. createShape with shape="rectangle", x=300, y=370, color="#3b82f6"
+
+EXAMPLE: For "delete the red circle", you should call:
+1. deleteShape with description="red circle"
 
 LAYOUT GUIDELINES:
 - Username label: x: 300, y: 200, width: 100, height: 20, font_size: 16
